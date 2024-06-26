@@ -86,8 +86,8 @@ p1 <- dat |> #filter(t != "t1500") |>
 
   # scale_fill_brewer(palette = "Set2") +
   # scale_color_brewer(palette = "Set2") +
-  scale_fill_manual(values = c("#97c225", "#E7B800", "#00b5e7", "indianred3")) +
-  scale_colour_manual(values = c("darkolivegreen", "orange2", "lightskyblue4", "indianred3"), labels = c("t = 1500", "t = 2000", "t = 2500", "t = 3000")) +
+  scale_fill_manual(values = c("darkgreen", "goldenrod3", "#00b5e7", "brown4")) +
+  scale_colour_manual(values = c("darkolivegreen", "goldenrod3", "lightskyblue4", "brown4"), labels = c("t = 1500", "t = 2000", "t = 2500", "t = 3000")) +
   labs(x = "Number of feedback loop", y = "Average aggregated symptom level", col = "") +
   theme_pubr() +
   guides(fill = "none") + 
@@ -293,16 +293,17 @@ z.sam <- dat.sam$average_sum
 
 
 
-# pdf(file = "3dplot.pdf", bg = 'transparent', family="Palatino", width = 13, height = 6)
+# pdf(file = "figure/3dplot.pdf", bg = 'transparent', family="Palatino", width = 13, height = 7)
 
-par(mfrow=c(1,2), mar=c(0, 1.2, 0 ,1.2))
+par(mfrow=c(1,2), mar=c(0, 2, 3 ,1.2), oma=c(0,0,1,0))
 
 # 3dplot-1
 scatter3D(x, y, z, pch = 20, cex = .8, colvar = NULL, col=NULL, alpha = 0,
           theta = -40, phi = 25, bty="b",
-          xlab = "Number of feedback loop", ylab = "Var(C)", zlab = "Avg. aggregated symptom level",  cex.lab = 1.5, cex.symbols = 5,  cex.axis = 5, lwd.axis = 5,
-          surf = list(x = x.pred, y = y.pred, z = z.pred.loess,  
-                      facets = TRUE,  col=ramp.col(col = c("darkseagreen4","khaki"), n = 300, alpha=0.5), border=alpha("darkgray", .1)))
+          xlab = "Number of feedback loop", ylab = "Var(C)", zlab = "Avg. aggregated symptom level",
+          cex.lab = 1.5,  cex.main = 1.7, main = "(a)",
+          surf = list(x = x.pred, y = y.pred, z = z.pred.loess, facets = TRUE,  col=ramp.col(col = c("darkseagreen4","khaki"), n = 300, alpha=0.5), 
+                      border=alpha("darkgray", .1)))
 
 scatter3D(x.sam, y.sam, z.sam, pch = 20, cex = .9, colvar = NULL, col="dodgerblue4", alpha = 0.1,
           theta = -40, phi = 25, bty="b", add =T, cex.symbols = 5,  cex.axis = 5)
@@ -310,13 +311,13 @@ scatter3D(x.sam, y.sam, z.sam, pch = 20, cex = .9, colvar = NULL, col="dodgerblu
 # 3dplot-2
 scatter3D(x, y, z, pch = 20, cex = .8, colvar = NULL, col=NULL, alpha = 0,
           theta = 30, phi = 25, bty="b",
-          xlab = "Number of feedback loop", ylab = "Var(C)", zlab = "Avg. aggregated symptom level",   cex.lab = 1.5,
-          surf = list(x = x.pred, y = y.pred, z = z.pred.loess,  
-                      facets = TRUE,  col=ramp.col(col = c("darkseagreen4","khaki"), n = 300, alpha=0.5), border=alpha("darkgray", .1)))
+          xlab = "Number of feedback loop", ylab = "Var(C)", zlab = "Avg. aggregated symptom level",
+          cex.lab = 1.55,  cex.main = 1.7, main = "(b)",
+          surf = list(x = x.pred, y = y.pred, z = z.pred.loess, facets = TRUE,  col=ramp.col(col = c("darkseagreen4","khaki"), n = 300, alpha=0.5), 
+                      border=alpha("darkgray", .1)))
 
 scatter3D(x.sam, y.sam, z.sam, pch = 20, cex = .9, colvar = NULL, col="dodgerblue4", alpha = 0.1,
           theta = 30, phi = 25, bty="b", add =T)
 
 # dev.off()
-
 
