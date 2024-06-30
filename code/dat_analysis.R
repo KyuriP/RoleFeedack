@@ -27,7 +27,6 @@ dat <- bind_rows(list(t1500 = t1500, t2000 = t2000, t2500 = t2500, t3000 = t3000
     loop_count < 50 ~ "[45, 50)",
     loop_count < 55 ~ "[50, 55)",
     loop_count <= 61 ~ "[55, 61)"))
-    
 
 # boxplot _ number feedback loop
 p1 <- dat |> 
