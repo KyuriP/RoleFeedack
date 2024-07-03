@@ -2,7 +2,7 @@
 #Set job requirements (note set time 1.5 to 2x longer than expected)
 #SBATCH -J network_loop
 
-#SBATCH -t 100:00:00 
+#SBATCH -t 120:00:00 
 #SBATCH -p genoa
 #SBATCH --exclusive 
 #SBATCH --nodes=1
@@ -23,4 +23,4 @@ module load R-bundle-CRAN/2023.12-foss-2023a
 
 Rscript $HOME/code/simulation.R 
 
-cp res.rds $HOME/results 
+cp res2.rds $HOME/results 
