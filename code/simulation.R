@@ -25,8 +25,8 @@ source("code/gen_network.R")
 ## weigthed adjacency matrix
 A <- matrix(c( .30, 0, 0, 0, 0, 0, 0, 0, 0,
                .33, .30, .14, .15, 0, .13, 0, 0, .15,
-               .13, .14, .30, .22, .23, 0, 0, 0, 0,
-               .21, .15, .22, .30, 0, 0, .12, 0, 0,
+               0,  0, .30, .22, .23, 0, 0, 0, 0,
+               .21, 0, 0, .30, 0, 0, 0.12, 0, 0,
                0, 0, 0, .17, .30, 0, 0, 0, 0,
                0, .13, 0, 0, .15, .30, .2, .15, .22,
                0, 0, 0, 0, 0, 0, .30, .17, 0,
@@ -34,10 +34,25 @@ A <- matrix(c( .30, 0, 0, 0, 0, 0, 0, 0, 0,
                0, 0, 0, 0, 0, 0, 0, .3, 0.30), 9, 9, byrow = T)
 rownames(A) <- colnames(A) <- c("anh", "sad", "slp", "ene", "app", "glt", "con", "mot", "sui")
 
-modifiable_edges <- list(c(2,1), c(2,9), c(3,1), c(3,5), c(4,1), c(4,7), c(5,4), c(6,5), c(6,7), c(6,8), c(6,9), c(7,8), c(9, 8))
+# modifiable_edges <- list(c(2,1), c(2,9), c(3,1), c(3,5), c(4,1), c(4,7), c(5,4), c(6,5), c(6,7), c(6,8), c(6,9), c(7,8), c(9, 8))
 
-all_networks <- generate_configurations(A, modifiable_edges)  
+modifiable_edges <- list(c(2,1), c(2,3), c(2,4), c(2,6), c(2,9), c(3,4), c(3,5), c(4,1), c(4,7), c(5,4), c(6,2), c(6,5), c(6,7), c(6,8), c(6,9), c(7,8), c(9,8))
 
+# all_networks2 <- generate_configurations(A, modifiable_edges2)  
+
+# get the number of loops 
+# loop_numbers3 <- c()
+# for (i in 1:length(all_networks)){
+#   loop_numbers3[i] <- find_loops(create_adjacency_list(all_networks2[[i]]), all_networks2[[i]]) |> length()
+# }
+# 
+# loop_numbers2 |> as.data.frame() |>
+# ggplot(aes(x  = loop_numbers2)) +
+#   geom_histogram()
+# 
+# loop_numbers3 |> as.data.frame() |>
+#   ggplot(aes(x  = loop_numbers3)) +
+#   geom_histogram(bins = 60)
 
 ## define model specifics: choose the scenario and initial value for symptoms
 mod <- mod_spec(scenario = "base", init_val = 0.01)
@@ -60,7 +75,7 @@ n_steps <- as.integer(timelength / deltaT) # must be a number greater than 1
 ## specify the magnitude of noise and specifics of shock 
 D_stoeq1 <- 0.01  # before shock
 # t_shock <- 1000 # time that shock begins
-t_shock <- 200 # time that shock begins
+t_shock <- 50 # time that shock begins
 
 shock_duration <- 300 # shock duration time points
 
@@ -76,7 +91,7 @@ message("Number of parallel workers: ", nbrOfWorkers())
 
 
 ## aggregate symptom level
-n_sims <- 100
+n_sims <- 50
 
 # run simulation n_sims times
 
@@ -95,16 +110,16 @@ aggregated <- furrr::future_map(1:n_sims, function(i) {
   t_shock = t_shock, 
   duration = shock_duration) |>
     # due to tiny differences in the underlying floating point representation of the numbers in R
-    dplyr::filter(round(t,1) == 1000.0 | round(t,1) == 2000.0 | round(t,1) == 2999.9) |>
+    dplyr::filter(round(t,1) == 500.0 |round(t,1) == 1000.0 |round(t,1) == 1500.0 |round(t,1) == 2000.0 | round(t,1) == 2500.0 | round(t,1) == 2999.9) |>
     dplyr::mutate(total = rowSums(pick(S_anh:S_sui)), .keep = "none")
     }, .options =furrr_options(seed = TRUE)) |> 
     purrr::list_rbind() 
   }, .options = furrr_options(seed = TRUE)) |> 
   purrr::list_cbind() |>
-  dplyr::mutate(mat = paste0(rep(1:length(all_networks), each = 3),"-", c(1000, 2000, 3000)))
+  dplyr::mutate(mat = paste0(rep(1:length(all_networks), each = 6),"-", c(500, 1000, 1500, 2000, 2500, 3000)))
 
 
-
+saveRDS(aggregated, "res2.rds")
 
 
 

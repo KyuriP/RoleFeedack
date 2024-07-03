@@ -74,6 +74,9 @@ calculate_var_row_sum <- function(matrix) {
   return(list(var_row_sum, min_in_degree, var_in_degree))
 }
 
+binary_str <- intToBits(8122)[1:length(modifiable_edges)]
+binary_str[2] == 1
+
 # Generate configurations
 generate_configurations <- function(A, modifiable_edges) {
   configs <- list()
@@ -85,7 +88,7 @@ generate_configurations <- function(A, modifiable_edges) {
       i <- edge[1] 
       j <- edge[2] 
       if (binary_str[idx] == 1) {
-        new_A[j, i] <- new_A[i, j]
+        new_A[j, i] <- new_A[j, i] + new_A[i, j]
         new_A[i, j] <- 0
       }
     }
@@ -122,8 +125,6 @@ analyze_and_save_networks <- function(configs, save_data = TRUE) {
   
   return(networks_by_loops)
 }
-
-
 
 
 
