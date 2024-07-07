@@ -74,8 +74,6 @@ calculate_var_row_sum <- function(matrix) {
   return(list(var_row_sum, min_in_degree, var_in_degree))
 }
 
-binary_str <- intToBits(8122)[1:length(modifiable_edges)]
-binary_str[2] == 1
 
 # Generate configurations
 generate_configurations <- function(A, modifiable_edges) {

@@ -13,12 +13,16 @@ library(gtable) # for adding the overarching facet title
 # load data
 res <- readRDS("data/res.rds")
 
+res16384 <- readRDS("data/res_16384.rds")
+res32768 <- readRDS("data/res_32768.rds")
+res49152 <- readRDS("data/res_49152.rds")
+res2 <- res16384 |> bind_rows(res32768, res49152)
 
 ## aggregate symptom level
-n_sims <- 100
+n_sims <- 50
 
 # run simulation n_sims times
-
+# original sim from Xinhai
 original_res <- map(1:n_sims, ~ euler_stochastic2(
     Amat = A, 
     deterministic_rate = mod$dif_eq,
@@ -39,6 +43,29 @@ original_res <- map(1:n_sims, ~ euler_stochastic2(
   purrr::list_cbind() |>
   dplyr::mutate(mat = paste0(rep(0, each = 3),"-", c(1000, 2000, 3000)))
 
+# 2nd simulation with diff A mat
+original_res2 <- map(1:n_sims, ~ euler_stochastic2(
+  Amat = A, 
+  deterministic_rate = mod$dif_eq,
+  stochastic_rate = mod$sto_eq,
+  initial_condition = mod$initial_values,
+  parameters1 = parms1,
+  parameters2 = parms2, 
+  deltaT = deltaT,
+  timelength = timelength,
+  D1 = D_stoeq1,
+  shock = TRUE,
+  t_shock = t_shock, 
+  duration = shock_duration)  |>
+    # due to tiny differences in the underlying floating point representation of the numbers in R
+    dplyr::filter(round(t,1) == 500.0 |round(t,1) == 1000.0 |round(t,1) == 1500.0 |round(t,1) == 2000.0 | round(t,1) == 2500.0 | round(t,1) == 2999.9) |>
+    dplyr::mutate(total = rowSums(pick(S_anh:S_sui)), .keep = "none")
+) |> 
+  purrr::list_cbind() |>
+  dplyr::mutate(mat = paste0(rep(0, each = 6),"-", c(500, 1000, 1500, 2000, 2500, 3000)))
+
+
+
 
 # get the number of loops 
 loop_numbers <- c()
@@ -49,28 +76,32 @@ for (i in 1:length(all_networks)){
 nloop_A <- find_loops(create_adjacency_list(A), A) |> length()
 
 # add it to the result
-comb_res <- rbind(original_res, res) |>
-  mutate(nloop = rep(c(nloop_A, loop_numbers), each =3)) |>
+# comb_res <- rbind(original_res, res) |>
+# mutate(nloop = rep(c(nloop_A, loop_numbers), each =3)) |>
+comb_res <- rbind(original_res2, res2) |>
+  mutate(nloop = rep(c(nloop_A, loop_numbers[1:49152]), each =6)) |>
   pivot_longer(!c(nloop, mat), names_to = "sim", values_to = "value") |>
   mutate(matr = stringr::str_extract_all(mat, "\\d+", simplify = T)[,1], 
          t = stringr::str_extract_all(mat, "\\d+", simplify = T)[,2],
-         sim = stringr::str_extract_all(sim, "\\d+", simplify = T),
-         group = case_when(
-           nloop < 18 ~ "[15, 18)",
-           nloop < 21 ~ "[18, 21)",
-           nloop < 24 ~ "[21, 24)",
-           nloop < 27 ~ "[24, 27)",
-           nloop < 30 ~ "[27, 30)",
-           nloop < 33 ~ "[30, 33)",
-           nloop < 36 ~ "[33, 36)",
-           nloop < 39 ~ "[36, 39)",
-           nloop < 42 ~ "[39, 42)",
-           nloop < 45 ~ "[42, 45)",
-           nloop < 48 ~ "[45, 48)",
-           nloop < 52 ~ "[48, 52)",
-           nloop < 55 ~ "[52, 55)",
-           nloop < 58 ~ "[55, 58)",
-           nloop <= 61 ~ "[58, 61]"))
+         sim = stringr::str_extract_all(sim, "\\d+", simplify = T))
+         # group = case_when(
+         #   nloop < 18 ~ "[15, 18)",
+         #   nloop < 21 ~ "[18, 21)",
+         #   nloop < 24 ~ "[21, 24)",
+         #   nloop < 27 ~ "[24, 27)",
+         #   nloop < 30 ~ "[27, 30)",
+         #   nloop < 33 ~ "[30, 33)",
+         #   nloop < 36 ~ "[33, 36)",
+         #   nloop < 39 ~ "[36, 39)",
+         #   nloop < 42 ~ "[39, 42)",
+         #   nloop < 45 ~ "[42, 45)",
+         #   nloop < 48 ~ "[45, 48)",
+         #   nloop < 52 ~ "[48, 52)",
+         #   nloop < 55 ~ "[52, 55)",
+         #   nloop < 58 ~ "[55, 58)",
+         #   nloop <= 61 ~ "[58, 61]"))
+
+
 
 
 # boxplot _ number feedback loop
