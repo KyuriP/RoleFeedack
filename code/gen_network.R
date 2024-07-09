@@ -56,9 +56,9 @@ find_loops <- function(graph, matrix) {
     if (loop[1] == min(loop)) {
       loop_length <- length(loop) - 1
       weighted_length <- calculate_weighted_loop_length(loop)
-      unique_loops_with_lengths[[paste(loop, collapse = "-")]] <- list(loop_length, weighted_length)
+      unique_loops_with_lengths[[paste(loop, collapse = "-")]] <- data.frame(loop_length = loop_length, weighted_length = weighted_length)
     }
-  }
+  } 
   
   return(unique_loops_with_lengths)
 }

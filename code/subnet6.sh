@@ -23,4 +23,4 @@ module load R-bundle-CRAN/2023.12-foss-2023a
 
 Rscript $HOME/code/net_114688.R 
 
-cp -r res* $HOME/results
+cp -r res* $HOME/results/

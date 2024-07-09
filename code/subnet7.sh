@@ -1,6 +1,6 @@
 #!/bin/bash
 #Set job requirements (note set time 1.5 to 2x longer than expected)
-#SBATCH -J net_114688
+#SBATCH -J net_81920
 
 #SBATCH -t 50:00:00 
 #SBATCH -p genoa
@@ -21,6 +21,6 @@ module load 2023
 module load R-bundle-CRAN/2023.12-foss-2023a
 
 
-Rscript $HOME/code/net_114688.R 
+Rscript $HOME/code/net_81920.R 
 
-cp -r res* $HOME/results
+cp -r res* $HOME/results/
