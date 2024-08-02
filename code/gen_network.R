@@ -24,7 +24,7 @@ find_loops <- function(graph, matrix) {
   dfs <- function(node, path) {
     if (node %in% path) {
       loop <- c(path[which(path == node):length(path)], node)
-      loops <<- union(loops, list(loop))
+      loops <<- base::union(loops, list(loop))
       return()
     }
     path <- c(path, node)
@@ -41,7 +41,9 @@ find_loops <- function(graph, matrix) {
     for (i in seq_len(length(loop) - 1)) {
       a <- loop[i]
       b <- loop[i + 1]
-      weight <- weight + 1 / matrix[b, a]
+      weight <- weight + (1 / matrix[b, a])
+      # weight <- weight + (matrix[b, a])
+      
     }
     return(weight)
   }
@@ -55,23 +57,28 @@ find_loops <- function(graph, matrix) {
   for (loop in loops) {
     if (loop[1] == min(loop)) {
       loop_length <- length(loop) - 1
-      weighted_length <- calculate_weighted_loop_length(loop)
-      unique_loops_with_lengths[[paste(loop, collapse = "-")]] <- data.frame(loop_length = loop_length, weighted_length = weighted_length)
+      rel_weighted_length <- calculate_weighted_loop_length(loop) / loop_length
+      unique_loops_with_lengths[[paste(loop, collapse = "-")]] <- 
+        data.frame(loop_length = loop_length, 
+                   rel_weighted_length = rel_weighted_length)
     }
   } 
   
   return(unique_loops_with_lengths)
 }
 
-# Calculate variance row sum
-calculate_var_row_sum <- function(matrix) {
+# Calculate variance in-degree/strength
+cal_sd <- function(matrix) {
   in_degree <- colSums(matrix > 0)
-  min_in_degree <- min(in_degree)
-  var_in_degree <- var(in_degree)
+  in_strength <- colSums(matrix)
+  out_degree <- rowSums(matrix > 0)
+  out_strength <- rowSums(matrix)
   
-  row_sum <- rowSums(matrix)
-  var_row_sum <- var(row_sum)
-  return(list(var_row_sum, min_in_degree, var_in_degree))
+  sd_in_degree <- sd(in_degree)
+  sd_in_strength <- sd(in_strength)
+  sd_out_degree <- sd(out_degree)
+  sd_out_strength <- sd(out_strength)
+  return(data.frame(sdInStr = sd_in_strength, sdInDg= sd_in_degree, sdOutStr = sd_out_strength, sdOutDg= sd_out_degree, sumsdStr = sd_in_strength + sd_out_strength, sumsdDg = sd_in_degree + sd_out_degree))
 }
 
 
