@@ -7,35 +7,76 @@ comb_avg_res |> filter(t == 2000 & nloop == 18, avg <=0.8 | avg >= 8, length ==2
 loop_info[[35656]]
 
 
-highnet <-comb_avg_res|> filter(t == 2000) |> 
+highnet <- c(800, 1200, 1600, 2000) |> map(comb_avg_res |> filter(t == x) |>
+  group_by(t) |>
   # slice the top 100
-  slice_max(order_by = avg, n = 100)
+  slice_max(order_by = avg, n = 100))
+
+# time points to use
+ts <- c(800, 1200, 1600, 2000)
+
+# high level networks
+highnet <- ts |> map(function(x) {
+  comb_avg_res |>
+    filter(t == x) |>
+    slice_max(order_by = avg, n = 100) 
+}) |> set_names(paste0("t", ts)) #|>
+  bind_rows(.id = "id")
+
+# low level networks
+lownet <- ts |> map(function(x) {
+  comb_avg_res |>
+    filter(t == x, nloop!=0) |>
+    slice_min(order_by = avg, n = 100) 
+}) |> set_names(paste0("t", ts)) #|>
+ bind_rows(.id = "id")
+
 
 # for low net, we exclude the acyclic ones as they are not informative 
-lownet <-comb_avg_res|> filter(t == 2000, nloop!=0) |>
-  # slice the bottom 100 
-  slice_min(order_by = avg, n = 100)
+# lownet <-comb_avg_res|> filter(t == 2000, nloop!=0) |>
+#   # slice the bottom 100 
+#   slice_min(order_by = avg, n = 100)
+high_idx <- highnet |> map(~ transmute(.x, matr = as.numeric(matr) + 1) |> unlist())
+low_idx <- lownet |> map(~ transmute(.x, matr = as.numeric(matr) + 1) |> unlist())
 
-high_idx <- highnet$matr |> as.numeric() + 1
-low_idx <- lownet$matr |> as.numeric() + 1
+# high_idx <-  highnet$matr |> as.numeric() + 1
+# low_idx <- lownet$matr |> as.numeric() + 1
 
-high_net <- loop_info[high_idx]
-low_net <- loop_info[low_idx]
+high_net <- high_idx |> map(\(x) loop_info[x])
+low_net <- low_idx |> map(\(x) loop_info[x])
 
-high_node <- high_net |>  purrr::map(\(x) str_extract_all(x$id, "\\d", simplify = T)[,-1] |> 
-                          table(exclude = "") |> as.data.frame()) |> list_rbind() |>
+# high_net <- loop_info[high_idx]
+# low_net <- loop_info[low_idx]
+
+high_node <- high_net |> purrr::map_depth(2, \(x) str_extract_all(x$id, "\\d", simplify = T)[,-1] |> 
+                          table(exclude = "") |> as.data.frame()) |> 
+                            map(~.x |> list_rbind() |>
   summarize(total = sum(Freq), .by = Var1) |>
-  mutate(total = total / sum(total))
+  mutate(Totalsum = sum(total),
+  total = total / Totalsum)
+  )
 
-low_node <- low_net |>  purrr::map(\(x) str_extract_all(x$id, "\\d", simplify = T)[,-1] |> 
-                                       table(exclude = "") |> as.data.frame()) |> list_rbind() |>
-  summarize(total = sum(Freq), .by = Var1) |>
-  mutate(total = total/sum(total))
+low_node <- low_net |> purrr::map_depth(2, \(x) str_extract_all(x$id, "\\d", simplify = T)[,-1] |> 
+                                          table(exclude = "") |> as.data.frame()) |> 
+  map(~.x |> list_rbind() |>
+        summarize(total = sum(Freq), .by = Var1) |>
+        mutate(Totalsum = sum(total),
+               total = total / Totalsum)
+  )
+
+# low_node <- low_net |>  purrr::map(\(x) str_extract_all(x$id, "\\d", simplify = T)[,-1] |> 
+#                                        table(exclude = "") |> as.data.frame()) |> list_rbind() |>
+#   summarize(total = sum(Freq), .by = Var1) |>
+#   mutate(total = total/sum(total))
   
 # check the node frequency 
-bind_rows(high_node, low_node, .id = "id") |>
+df_hnode <- high_node |> map_dfr(~.x, .id = "t") 
+df_lnode <- low_node |> map_dfr(~.x, .id = "t") 
+
+bind_rows(df_hnode, df_lnode, .id = "id") |>
   ggplot(aes(x = factor(Var1, level = c(1:9)), y = total, col = id, group = id)) +
-  geom_point()+ geom_line()
+  geom_point()+ geom_line() +
+  facet_wrap(~t)
 
 
 # check the edges
@@ -54,45 +95,155 @@ extract_edges <- function(cycle) {
 
 
 # get the edge freq proportion
-high_edges <- high_net |>  purrr::map(\(x) x$id |> extract_edges()) |> unlist() |> table() |> prop.table() |> as.data.frame()
-low_edges <- low_net |>  purrr::map(\(x) x$id |> extract_edges()) |> unlist() |> table()  |> prop.table() |> as.data.frame()
+high_edges <- high_net |>  purrr::map_depth(2, \(x) x$id |> extract_edges()) |> map(~.x |> unlist() |> table() |> prop.table() |> as.data.frame())
+low_edges <- low_net |>  purrr::map_depth(2, \(x) x$id |> extract_edges()) |> map(~.x |> unlist() |> table() |> prop.table() |> as.data.frame())
+# low_edges <- low_net |>  purrr::map(\(x) x$id |> extract_edges()) |> unlist() |> table()  |> prop.table() |> as.data.frame()
 
-high_edges |>
-  arrange(Freq)
+top10_he <- high_edges |> map_dfr(~.x ,id = "t") |> summarize(freq_m = mean(Freq), freq_sd = sd(Freq), .by = Var1)
+top10_le <- low_edges |>  map_dfr(~.x ,id = "t") |> summarize(freq_m = mean(Freq),freq_sd = sd(Freq), .by = Var1)
 
-low_edges |>
-  arrange(Freq)
+top10_he |> arrange(desc(freq_m))
+top10_le |> arrange(desc(freq_m))
 
-bind_cols(high_edges, low_edges)|>
-  summarize(diff = Freq...2 - Freq...4, .by = Var1...1)  |>
-  arrange(diff)
+plotdf |> arrange(desc(diff))
 
-    ggplot(aes(x = Var1...1, y = diff, group = 1)) +
-  geom_line()
+plotdf <- top10_he |> full_join(top10_le, by = join_by(Var1)) |>
+  set_names(c("edge", "highnet_m","highnet_sd", "lownet_m", "lownet_sd")) |>
+  mutate(diff = highnet_m - lownet_m) |>
+  pivot_longer(!c(edge, diff), names_to = c("id", ".value"), names_sep = "_") |>
+  # by 2 (becuz of id) --> if want 7, then 14
+  mutate(high_diff = diff %in% sort(diff, decreasing = TRUE)[1:16],
+         low_diff = diff %in% sort(diff)[1:16],
+         m_min = m - sd,
+         m_max = m + sd) |>
+  group_by(id) |>   
+  # total 32 chocies, half top == 16
+  mutate(top10_freq = rank(-m) <= 13) |>
+  ungroup()
 
-# plot the edge freq prop.
-bind_rows(high_edges, low_edges, .id = "id") |>
-  ggplot(aes(x = Var1, y = Freq, col = id, group = id)) +
-  geom_point()+ geom_line()
 
-# avg mat        nloop  nos1  nos2 jaccard specrad matr  t     group
-# <dbl> <chr>      <dbl> <dbl> <dbl>   <dbl>   <dbl> <chr> <fct> <chr>
-#   1 8.74  35746-2000    19 0.402 0.538   0.502   0.624 35746 2000  0.20+
-#   2 0.451 42319-2000    19 0.437 0.573   0.528   0.648 42319 2000  0.20+
-#   3 8.59  69298-2000    19 0.491 0.614   0.564   0.642 69298 2000  0.20+
-#   4 8.58  69306-2000    19 0.491 0.614   0.564   0.642 69306 2000  0.20+
+# Calculate the upper and lower limits for error bars
+plotdf <- plotdf %>%
+  mutate(
+    ymin = freq - SD,
+    ymax = freq + SD
+  )
 
-high19 <- loop_info[[35253]]
-low19 <- loop_info[[92345]]
+# Custom x-axis labels
+# Create x-labels for edges with arrows
+custom_labels <- sapply(levels(plotdf$edge), function(x) {
+  # Split the edge into two parts
+  parts <- strsplit(x, "-")[[1]]
+  # Create the expression with the correct format
+  as.expression(bquote(.(parts[1]) %->% .(parts[2])))
+})
 
-high19$loop_length |> hist()
-add(low19$loop_length |> hist())
-high19$rel_weighted_length |> hist()
-low19$rel_weighted_length |> hist()
 
-qgraph(all_networks[[52517]])
-qgraph(all_networks[[92345]])
+edge_plot <- ggplot(data = plotdf) +
+  # Points and lines for freq
+  geom_point(aes(x = edge, y = m, col = id), alpha = 0.8, shape=1, size = 1) +
+  geom_line(aes(x = edge, y = m, col = id, group = id), alpha = 0.6) +
+  geom_errorbar(aes(x = edge,ymin = m_min, ymax = m_max, color = id), width = 0.2, alpha = 0.3) +
+  # Line for diff values
+  # Points for low_top TRUE
+ # geom_point(data = plotdf %>% filter(low_diff), aes(x = edge, y = diff), color = "blue", size = 2, shape = 8) +
+  geom_point(data = plotdf %>% filter(id == "highnet", top10_freq), aes(x = edge, y = m), color = "coral", size = 2) +
+  geom_point(data = plotdf %>% filter(id == "lownet", top10_freq), aes(x = edge, y = m), color = "darkseagreen", size = 2) +
+  # Points for high_top TRUE
+  geom_point(data = plotdf %>% filter(high_diff), aes(x = edge, y = diff, color = "High diff. points"), size = 3.5, shape = 8, alpha = 0.3) +
+  geom_line(aes(x = edge, y = diff, col = "diff", linetype="dashed"), group=1, linetype = 2, alpha = 0.5) +
+  
+  # Custom x-axis labels
+  scale_x_discrete(labels = custom_labels) +
+  scale_color_manual(values = c("highnet" = "coral", "lownet" = "darkseagreen", "High diff. points" = "coral4", diff = "gray"), labels = c("Difference (high-low)", "High difference points", "High symptom level networks", "Low symptom level networks"))+
+  # scale_linetype_manual(values = c("Difference (high-low)" = "dashed")) +
+  labs(y = "Proportion of edge frequency", x = "Edges", color = "", linetype = "") +
+  theme_pubr() +
+  # Customize guides to combine color and linetype
+  guides(color = guide_legend(title = "", override.aes = list(linetype = c(2,1,1,1), size = 3, linewidth = 1), nrow=2,byrow=TRUE)) +
+  theme(legend.position = "bottom",
+        # space between legend and plot
+        text = element_text(size = 23, family="Palatino"),
+        axis.text.x = element_text(angle = 80, vjust = 0.5),
+        legend.text=element_text(size=24),
+        legend.key.size = unit(4,"line"),
+        legend.box = "vertical",  # Ensure legends are arranged horizontally
+        legend.margin = margin(10, 10, 10, 10), # Adjust margin inside the legend box
+        axis.title.y = element_text(vjust = +3, size =26),
+        axis.title.x = element_text(vjust = -0.75, size =26),
+        plot.margin = margin(t = 2, r = 1, b = 1, l = 1, "cm"))
+    
 
-all_networks[[4078]]
-loop_numbers[35]
-loop_info[[42320]]
+ggsave("figure/edge_plot.pdf", plot = edge_plot, width = 40, height = 20, units = "cm", dpi = 300)
+
+
+## plot the networks
+
+high_A <- matrix(c(.30, 0.33, 0, 0, 0, 0, 0, 0, 0,
+                   0, .30, .14, .15, 0, .13, 0, 0, .15,
+                   0,  0, .30, .22, 0, 0, 0, 0, 0,
+                   .21, 0, 0, .30, 0, 0, 0.12, 0, 0,
+                   0, 0, .23, 0, .30, 0, 0, 0, 0,
+                   0, .13, 0, 0, .15, .30, 0, 0, 0,
+                   0, 0, 0, 0, 0, 0, .30, 0, 0,
+                   0, 0, 0, 0, 0, 0, 0, .30, .30,
+                   0, 0, 0, 0, 0, .22, 0, 0, .30), 9, 9, byrow = T)
+rownames(high_A) <- colnames(high_A) <- c("anh", "sad", "slp", "ene", "app", "glt", "con", "mot", "sui")
+
+manual_layout <- matrix(c( -1.00000000,-0.3697451,
+                           -0.25362943,-0.4206165,
+                           -0.86442347, 0.4941126,
+                           -0.08080896, 0.3245454,
+                           0.49177041, 0.9000000,
+                           0.43942364,-0.1656119,
+                           0.99799343, 0.2837986,
+                           1.00000000,-0.7135021,
+                           0.41570786,-1.0000000), 9, 2, byrow=T)
+high_edge <- matrix(c(0, 1, 0, 0, 0, 0, 0, 0, 0,
+                       0, 0, 0, 0, 0, 1, 0, 0, 0,
+                       0,  0, 0, 1, 0, 0, 0, 0, 0,
+                       1, 0, 0, 0, 0, 0, 0, 0, 0,
+                       0, 0, 1, 0, 0, 0, 0, 0, 0,
+                       0, 0, 0, 0, 1, 0, 0, 0, 0,
+                       0, 0, 0, 0, 0, 0, 0, 0, 0,
+                       0, 0, 0, 0, 0, 0, 0, 0, 1,
+                       0, 0, 0, 0, 0, 1, 0, 0, 0), 9, 9, byrow = T)
+high_edgecol <- ifelse(high_edge == 1, "brown", "coral")
+high_edgelty <- ifelse(high_edge == 1, 2, 1)
+
+# pdf(file = "figure/highnet.pdf", width=5, height=5, bg = 'transparent', family="Palatino")
+
+qgraph(high_A, layout = manual_layout, edge.color = high_edgecol, lty = high_edgelty, label.color = "black", asize= 5, fade =F, vsize=10)
+
+# dev.off()
+
+# low level network
+
+low_A <- matrix(c(.30, 0, 0, 0, 0, 0, 0, 0, 0,
+                   0, .30, .14, .15, 0, 0, 0, 0, 0,
+                   0,  0, .30, 0, .23, 0, 0, 0, 0,
+                   0, 0, .22, .30, .17, 0, .12, 0, 0,
+                   0, 0, 0, 0, .30, .15, 0, 0, 0,
+                   0, .13, 0, 0, 0, .30, 0, 0, .22,
+                   0, 0, 0, 0, 0, .20, .30, .17, 0,
+                   0, 0, 0, 0, 0, .15, 0, .30, 0,
+                   0, .15, 0, 0, 0, 0, 0, 0, .30), 9, 9, byrow = T)
+rownames(low_A) <- colnames(low_A) <- c("anh", "sad", "slp", "ene", "app", "glt", "con", "mot", "sui")
+
+low_edge <- matrix(c(0, 1, 0, 0, 0, 0, 0, 0, 0,
+                       0, 0, 0, 0, 0, 1, 0, 0, 0,
+                       0,  0, 0, 1, 0, 0, 0, 0, 0,
+                       1, 0, 0, 0, 0, 0, 0, 0, 0,
+                       0, 0, 1, 0, 0, 0, 0, 0, 0,
+                       0, 0, 0, 0, 1, 0, 0, 0, 0,
+                       0, 0, 0, 0, 0, 0, 0, 0, 0,
+                       0, 0, 0, 0, 0, 0, 0, 0, 1,
+                       0, 0, 0, 0, 0, 1, 0, 0, 0), 9, 9, byrow = T)
+edgecol <- ifelse(edgecolors == 1, "brown", "coral")
+#edgelty <- ifelse(edgecolors == 1, 2, 1)
+
+# pdf(file = "figure/lownet.pdf", width=5, height=5, bg = 'transparent', family="Palatino")
+
+qgraph(low_A, layout = manual_layout, edge.color = "darkseagreen",label.color = "black", asize= 5, fade = F, vsize=10)
+
+# dev.off()

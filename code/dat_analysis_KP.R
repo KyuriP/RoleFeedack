@@ -485,63 +485,16 @@ cowplot::ggdraw(p3)
 
 
 
-### common cycle plot
-## variance in-degree plot
-comb_res |> 
-ggplot() +
-  aes(y = value, 
-      x = factor(nloop, labels = c(0:19, "20+")), color = group) +
-  # geom_boxplot(#width = .2,
-  #              outlier.alpha = 0.1,
-  #              #outlier.size = 0.5,
-  #              outlier.size = 0,
-  #              alpha = 0.2) +
-  geom_boxplot(width = .5,
-               outlier.alpha = 0.1,
-               outlier.size = 0.6,
-               outlier.shape = 21,
-               outlier.color = NA,
-               outlier.fill = NULL,
-               alpha = 0.1,
-               position = position_dodge(width = 0.8))  +
-  # geom_point(aes(color = t),
-  #            position = position_jitter(w = .2),
-  #            size = 1,
-  #            alpha = 0.2,
-  #            show.legend = F) +
-  # geom_flat_violin(position = position_nudge(x = 1),
-  #                  alpha = 0.4,
-  #                  adjust = 1.1,
-  #                  trim = T) +
-  facet_wrap(~t, ncol = 2) 
-
-
-
-comb_res |> filter (t == 800) |>
-  ggplot() +
-  aes(x = common_score, 
-      x = factor(nloop, labels = c(0:19, "20+")), color = group) +
-  geom_point(
-             position = position_jitter(w = .2),
-             size = 1,
-             alpha = 0.2) 
-  geom_flat_violin(position = position_nudge(x = 1),
-                   alpha = 0.4,
-                   adjust = 1.1,
-                   trim = T) 
-  # facet_wrap(~t, ncol = 2) 
-
-
   
   
   
   ## 3d regression plane
   # set the x, y, and z variables
-  x <- comb_avg_res$nloop
-  y <- comb_avg_res$nos1
-  z <- comb_avg_res$avg
-  
-  # compute the linear regression 
+  x <- loop_numbers #comb_avg_res$nloop
+  y <- nos1#comb_avg_res$nos1
+  z <- comb_avg_res |> filter(t == 1200) |> select(avg) |> unlist()
+
+    # compute the linear regression 
   fit <- lm(z ~ x * y)
   summary(fit)
   
@@ -574,17 +527,19 @@ comb_res |> filter (t == 800) |>
   # pdf(file = "figure/3dplot.pdf", bg = 'transparent', family="Palatino", width = 13, height = 7)
   
   par(mfrow=c(1,2), mar=c(0, 2, 3 ,1.2), oma=c(0,0,1,0))
-  
-  # 3dplot-1
+
+    # 3dplot-1
   scatter3D(x, y, z, pch = 20, cex = .8, colvar = NULL, col=NULL, alpha = 0,
-            theta = -40, phi = 25, bty="b",
+            theta = 60, phi = 25, bty="b",
             xlab = "Number of feedback loop", ylab = "Var(C)", zlab = "Avg. aggregated symptom level",
             cex.lab = 1.5,  cex.main = 1.7, main = "(a)",
             surf = list(x = x.pred, y = y.pred, z = z.pred.loess, facets = TRUE,  col=ramp.col(col = c("darkseagreen4","khaki"), n = 300, alpha=0.5), 
                         border=alpha("darkgray", .1)))
   
-  scatter3D(x.sam, y.sam, z.sam, pch = 20, cex = .9, colvar = NULL, col="dodgerblue4", alpha = 0.1, colvar = 
-            theta = -40, phi = 25, bty="b", add =T, cex.symbols = 5,  cex.axis = 5)
+  scatter3D(x, y, z, pch = 20, cex = .9, colvar = NULL, col="dodgerblue4", alpha = 0.1, colvar = 
+              theta = -40, phi = 25, bty="b", add =T, cex.symbols = 5,  cex.axis = 5)
+  # scatter3D(x.sam, y.sam, z.sam, pch = 20, cex = .9, colvar = NULL, col="dodgerblue4", alpha = 0.1, colvar = 
+  #           theta = -40, phi = 25, bty="b", add =T, cex.symbols = 5,  cex.axis = 5)
   
   # 3dplot-2
   scatter3D(x, y, z, pch = 20, cex = .8, colvar = NULL, col=NULL, alpha = 0,
