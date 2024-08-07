@@ -13,16 +13,39 @@ library(stringr)
 
 
 ## weigthed adjacency matrix
+# A <- matrix(c( .30, 0, 0, 0, 0, 0, 0, 0, 0,
+#                .33, .30, .14, .15, 0, .13, 0, 0, .15,
+#                .13, .14, .30, .22, .23, 0, 0, 0, 0,
+#                .21, .15, .22, .30, 0, 0, .12, 0, 0,
+#                0, 0, 0, .17, .30, 0, 0, 0, 0,
+#                0, .13, 0, 0, .15, .30, .2, .15, .22,
+#                0, 0, 0, 0, 0, 0, .30, .17, 0,
+#                0, 0, 0, 0, 0, 0, 0, .30, 0,
+#                0, 0, 0, 0, 0, 0, 0, .3, 0.30), 9, 9, byrow = T)
+
+# simplified A
 A <- matrix(c( .30, 0, 0, 0, 0, 0, 0, 0, 0,
                .33, .30, .14, .15, 0, .13, 0, 0, .15,
-               .13, .14, .30, .22, .23, 0, 0, 0, 0,
-               .21, .15, .22, .30, 0, 0, .12, 0, 0,
+               0,  0, .30, .22, .23, 0, 0, 0, 0,
+               .21, 0, 0, .30, 0, 0, 0.12, 0, 0,
                0, 0, 0, .17, .30, 0, 0, 0, 0,
                0, .13, 0, 0, .15, .30, .2, .15, .22,
                0, 0, 0, 0, 0, 0, .30, .17, 0,
                0, 0, 0, 0, 0, 0, 0, .30, 0,
                0, 0, 0, 0, 0, 0, 0, .3, 0.30), 9, 9, byrow = T)
 rownames(A) <- colnames(A) <- c("anh", "sad", "slp", "ene", "app", "glt", "con", "mot", "sui")
+
+A_col <- matrix(c( 1, 0, 0, 0, 0, 0, 0, 0, 0,
+                   0, 1, 0, 0, 0, 1, 0, 0, 0,
+                   0,  0, 1, 0, 0, 0, 0, 0, 0,
+                   0, 0, 0, 1, 0, 0, 0, 0, 0,
+                   0, 0, 0, 0, 1, 0, 0, 0, 0,
+                   0, 1, 0, 0, 0, 1, 0, 0, 0,
+                   0, 0, 0, 0, 0, 0, 1, 0, 0,
+                   0, 0, 0, 0, 0, 0, 0, 1, 0,
+                   0, 0, 0, 0, 0, 0, 0, 0, 1), 9, 9, byrow = T)
+
+edgecol <- ifelse(A_col == 1, "#F5651C", "darkgray")
 
 # for legend in the example network plot
 Names <- c("anhedonia", "sadness", "sleep", "energy", "appetite", "guilty", "concentration", "motor", "suicidal")
@@ -42,7 +65,9 @@ manual_layout <- matrix(c( -1.00000000,-0.3697451,
 # save plot (Fig1)
 pdf(file = "toymodel-bi2.pdf", width=16, height=12, bg = 'transparent', family="Palatino")
 
-qgraph(A, theme = 'colorblind', groups = grp, color = c("white", "white"), nodeNames = Names, border.color = c("darkgray", "#F5651C", "#F5651C", "#F5651C", "#F5651C", "#F5651C", "darkgray", "darkgray", "darkgray"),border.width = 2, edge.color = c("#A9A9A9FF", "#DDDDDDFF", "#C8C8C8FF", "#F8a365", "#F8a365", "#F8a365", "#F8a365", "#F8a365", "#F8a365", "#F8a365", "#F8a365", "#F8a365", "#F8a365", "#F8a365", "#E0E0E0FF", "#CBCBCBFF", "#D8D8D8FF", "#D3D3D3FF", "#B1B1B1FF", "#D8D8D8FF", "#C6C6C6FF"), edge.width = 0.8, curve = 0.3, curveAll = T, label.color = "black", legend.cex = 1.2, asize= 4, layout = manual_layout, bidirectional = TRUE)
+# qgraph(A, theme = 'colorblind', groups = grp, color = c("white", "white"), nodeNames = Names, border.color = c("darkgray", "#F5651C", "#F5651C", "#F5651C", "#F5651C", "#F5651C", "darkgray", "darkgray", "darkgray"),border.width = 2, edge.color = c("#A9A9A9FF", "#DDDDDDFF", "#C8C8C8FF", "#F8a365", "#F8a365", "#F8a365", "#F8a365", "#F8a365", "#F8a365", "#F8a365", "#F8a365", "#F8a365", "#F8a365", "#F8a365", "#E0E0E0FF", "#CBCBCBFF", "#D8D8D8FF", "#D3D3D3FF", "#B1B1B1FF", "#D8D8D8FF", "#C6C6C6FF"), edge.width = 0.8, curve = 0.3, curveAll = T, label.color = "black", legend.cex = 1.2, asize= 4, layout = manual_layout)
+
+qgraph(A, theme = 'colorblind', groups = grp, color = c("white", "white"), nodeNames = Names, border.color = c("darkgray", "#F5651C", "#F5651C", "#F5651C", "#F5651C", "#F5651C", "darkgray", "darkgray", "darkgray"),border.width = 2, edge.color = edgecol, edge.width = 0.8, curve = 0.3, curveAll = T, label.color = "black", legend.cex = 1.2, asize= 4, layout = manual_layout)
 
 dev.off()
 

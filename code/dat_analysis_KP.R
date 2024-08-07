@@ -181,7 +181,7 @@ rel_strength <- loop_info |>
 # 
 # str_ratio <- rel_strength$ratio
 
-max_str_sd <- 1/(rel_strength$Mean * sd_info$sumsdStr)
+max_str_sd <- rel_strength$min  / sd_info$sumsdStr
 # max_str_sd <- rel_strength$Mean / sd_info$sumsdStr
 
 deg_sd <- sd_info$sumsdStr
@@ -268,20 +268,20 @@ nos2 <- common_cycle |> purrr::map_dbl(list("nos2", 1), .default = 0)
 
 
 comb_avg_res <- rbind(ori_avg_res, avg_res) |>
-  dplyr::mutate(nloop = rep(loop_numbers, each =5),
+  dplyr::mutate(loop_numbers = rep(loop_numbers, each =5),
                 nos1 = rep(nos1, each = 5),
                 nos2 = rep(nos2, each = 5),
-                jaccard = rep(jaccard, each = 5),
-                specrad = rep(spec_rad, each = 5),
+                #jaccard = rep(jaccard, each = 5),
+                #specrad = rep(spec_rad, each = 5),
                 max_str_sd = rep(max_str_sd, each = 5),
-                specrad_sd = rep(spec_rad_sd, each = 5),
-                length = rep(length, each = 5),
+                #specrad_sd = rep(spec_rad_sd, each = 5),
+                #length = rep(length, each = 5),
                 deg_sd = rep(deg_sd, each = 5)) |>
   # pivot_longer(!c(nloop, mat, common_score), names_to = "sim", values_to = "value") |>
   dplyr::mutate(matr = stringr::str_extract_all(mat, "\\d+", simplify = T)[,1], 
                 t = factor(stringr::str_extract_all(mat, "\\d+", simplify = T)[,2], levels = c("400", "800", "1200", "1600", "2000")),
                 # if loop number is higher than 20, then 20
-                nloop = ifelse(nloop >= 20, "20+", nloop),
+                nloop = ifelse(loop_numbers >= 20, "20+", loop_numbers),
                 # make sure nos1 == 0 when nloop == 1
                 nos1 = ifelse(nloop == 1, 0, nos1),
                 group = case_when(
@@ -486,72 +486,82 @@ cowplot::ggdraw(p3)
 
 
   
-  
-  
-  ## 3d regression plane
-  # set the x, y, and z variables
-  x <- loop_numbers #comb_avg_res$nloop
-  y <- nos1#comb_avg_res$nos1
-  z <- comb_avg_res |> filter(t == 1200) |> select(avg) |> unlist()
 
-    # compute the linear regression 
-  fit <- lm(z ~ x * y)
-  summary(fit)
-  
-  # loess fit
-  fit.loess <- loess(z ~ x * y, span = 0.85, degree = 2)
-  summary(fit.loess)
-  
-  # create a grid from the x and y values (min to max) and predict values for every point
-  # this will become the regression plane
-  grid.lines = 50
-  x.pred <- seq(min(x), max(x), length.out = grid.lines)
-  y.pred <- seq(min(y), max(y), length.out = grid.lines)
-  xy <- expand.grid(x = x.pred, y = y.pred)
-  z.pred <- matrix(predict(fit, newdata = xy), 
-                   nrow = grid.lines, ncol = grid.lines)
-  
-  z.pred.loess <- matrix(predict(fit.loess, newdata = xy), 
-                         nrow = grid.lines, ncol = grid.lines)
-  
-  # create the fitted points for droplines to the surface
-  # fitpoints <- predict(fit)
-  dat.sam <- dat |> sample_frac(0.1)
-  x.sam <- dat.sam$loop_count 
-  y.sam <- dat.sam$var_in_degree 
-  z.sam <- dat.sam$average_sum 
-  
-  
-  
-  
-  # pdf(file = "figure/3dplot.pdf", bg = 'transparent', family="Palatino", width = 13, height = 7)
-  
-  par(mfrow=c(1,2), mar=c(0, 2, 3 ,1.2), oma=c(0,0,1,0))
+## 3d regression plane
 
-    # 3dplot-1
-  scatter3D(x, y, z, pch = 20, cex = .8, colvar = NULL, col=NULL, alpha = 0,
-            theta = 60, phi = 25, bty="b",
-            xlab = "Number of feedback loop", ylab = "Var(C)", zlab = "Avg. aggregated symptom level",
-            cex.lab = 1.5,  cex.main = 1.7, main = "(a)",
-            surf = list(x = x.pred, y = y.pred, z = z.pred.loess, facets = TRUE,  col=ramp.col(col = c("darkseagreen4","khaki"), n = 300, alpha=0.5), 
-                        border=alpha("darkgray", .1)))
+# Select relevant columns
+selected_data <- comb_avg_res |>
+  filter(t == 1200, loop_numbers != 0, loop_numbers <= 20, loop_numbers > 1) |>
+  select(deg_sd, nos1, loop_numbers, max_str_sd, avg) 
+
+# set the x, y, and z variables
+x <- selected_data$loop_numbers #comb_avg_res$nloop
+y <- selected_data$deg_sd #comb_avg_res$nos1
+z <- selected_data$avg #comb_avg_res |> filter(t == 1200) |> select(avg) |> unlist()
+
+# compute the linear regression 
+fit <- lm(z ~ x * y)
+summary(fit)
+
+# loess fit
+fit.loess <- loess(z ~ x * y, degree = 2)
+summary(fit.loess)
+
+# create a grid from the x and y values (min to max) and predict values for every point
+# this will become the regression plane
+# Create a grid for x and y
+
+grid.lines = 100
+x.pred <- seq(min(x), max(x), length.out = grid.lines)
+y.pred <- seq(min(y), max(y), length.out = grid.lines)
+xy <- expand.grid(x = x.pred, y = y.pred)
+z.pred <- matrix(predict(fit, newdata = xy), 
+                 nrow = grid.lines, ncol = grid.lines)
+
+z.pred.loess <- matrix(predict(fit.loess, newdata = xy), 
+                       nrow = grid.lines, ncol = grid.lines)
+
+
+
+
+# create the fitted points for droplines to the surface
+# fitpoints <- predict(fit)
+dat.sam <- selected_data |> sample_frac(0.03) #balanced_df |> sample_frac(0.3)
+x.sam <- dat.sam$loop_numbers
+y.sam <- dat.sam$deg_sd 
+z.sam <- dat.sam$avg
   
-  scatter3D(x, y, z, pch = 20, cex = .9, colvar = NULL, col="dodgerblue4", alpha = 0.1, colvar = 
-              theta = -40, phi = 25, bty="b", add =T, cex.symbols = 5,  cex.axis = 5)
-  # scatter3D(x.sam, y.sam, z.sam, pch = 20, cex = .9, colvar = NULL, col="dodgerblue4", alpha = 0.1, colvar = 
-  #           theta = -40, phi = 25, bty="b", add =T, cex.symbols = 5,  cex.axis = 5)
-  
-  # 3dplot-2
-  scatter3D(x, y, z, pch = 20, cex = .8, colvar = NULL, col=NULL, alpha = 0,
-            theta = 30, phi = 25, bty="b",
-            xlab = "Number of feedback loop", ylab = "Var(C)", zlab = "Avg. aggregated symptom level",
-            cex.lab = 1.55,  cex.main = 1.7, main = "(b)",
-            surf = list(x = x.pred, y = y.pred, z = z.pred.loess, facets = TRUE,  col=ramp.col(col = c("darkseagreen4","khaki"), n = 300, alpha=0.5), 
-                        border=alpha("darkgray", .1)))
-  
-  scatter3D(x.sam, y.sam, z.sam, pch = 20, cex = .9, colvar = NULL, col="dodgerblue4", alpha = 0.1,
-            theta = 30, phi = 25, bty="b", add =T)
-  
-  # dev.off()
-  
+
+pdf(file = "figure/3dplot_KP3.pdf", bg = 'transparent', family="Palatino", width = 13, height = 7)
+
+par(mfrow=c(1,2), mar=c(2, 2, 3 ,1.2), oma=c(0,0,1,0))
+# 3dplot-1
+scatter3D(x, y, z, pch = 20, cex = .8, colvar = NULL, col=NULL, alpha = 0,
+          theta = -45, phi = 20, bty="b",
+          xlab = "Number of feedback loop", ylab = "Total variability", zlab = "Avg. symptom level",
+          cex.lab = 1.55,  cex.main = 1.7, main = "(a)",
+          len = 3,
+          surf = list(x = x.pred, y = y.pred, z = z.pred.loess, facets = TRUE,  col=ramp.col(col = c("darkseagreen4","khaki"), n = 300, alpha=0.5), 
+                      border=alpha("darkgray", .1)))
+
+scatter3D(x.sam, y.sam, z.sam, pch = 20, cex = .9, colvar = NULL, col="dodgerblue4", alpha = 0.1,
+          theta = -45, phi = 20, bty="b", add =T)
+
+
+# 3dplot-2
+scatter3D(x, y, z, pch = 20, cex = .8, colvar = NULL, col=NULL, alpha = 0,
+          theta = 125, phi = 20, bty="b",
+          xlab = "Number of feedback loop", ylab = "Total variability", zlab = "Avg. symptom level",
+          cex.lab = 1.5,  cex.main = 1.7, main = "(b)",
+          surf = list(x = x.pred, y = y.pred, z = z.pred.loess, facets = TRUE,  col=ramp.col(col = c("darkseagreen4","khaki"), n = 300, alpha=0.5), 
+                      border=alpha("darkgray", .1)))
+
+scatter3D(x.sam, y.sam, z.sam, pch = 20, cex = .9, colvar = NULL, col="dodgerblue4", alpha = 0.1, 
+          theta = 125, phi = 20, bty="b", add =T, cex.symbols = 5,  cex.axis = 5)
+# scatter3D(x.sam, y.sam, z.sam, pch = 20, cex = .9, colvar = NULL, col="dodgerblue4", alpha = 0.1, colvar = 
+#           theta = -40, phi = 25, bty="b", add =T, cex.symbols = 5,  cex.axis = 5)
+
+
+dev.off()
+
   

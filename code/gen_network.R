@@ -2,22 +2,24 @@ library(matrixStats)
 library(igraph)
 library(purrr)
 
+
 # Create adjacency list
 create_adjacency_list <- function(matrix) {
-  A <- t(matrix)
+  A <- matrix
   graph_list <- vector("list", nrow(A))
   for (i in seq_len(nrow(A))) {
     graph_list[[i]] <- list()
   }
   for (i in seq_len(nrow(A))) {
     for (j in seq_len(ncol(A))) {
-      if (A[j, i] > 0) {
-        graph_list[[j]] <- c(graph_list[[j]], i)
+      if (A[i, j] > 0) {  # Correct the adjacency list creation
+        graph_list[[i]] <- c(graph_list[[i]], j)
       }
     }
   }
   return(graph_list)
 }
+
 
 # Find loops
 find_loops <- function(graph, matrix) {
