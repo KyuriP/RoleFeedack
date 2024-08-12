@@ -50,7 +50,9 @@ edgecol <- ifelse(A_col == 1, "#F5651C", "darkgray")
 # for legend in the example network plot
 Names <- c("anhedonia", "sadness", "sleep", "energy", "appetite", "guilty", "concentration", "motor", "suicidal")
 # grouping str
-grp <- list(`feedback loop` = 2:6, `no feedback loop` = c(1,7:9))
+# grp <- list(`feedback loop` = 2:6, `no feedback loop` = c(1,7:9))
+grp <- list(`feedback loop` = c(2,6), `no feedback loop` = c(-2,-6))
+
 # layout
 manual_layout <- matrix(c( -1.00000000,-0.3697451,
                            -0.25362943,-0.4206165,
@@ -63,13 +65,13 @@ manual_layout <- matrix(c( -1.00000000,-0.3697451,
                            0.41570786,-1.0000000), 9, 2, byrow=T)
 
 # save plot (Fig1)
-pdf(file = "toymodel-bi2.pdf", width=16, height=12, bg = 'transparent', family="Palatino")
+# pdf(file = "toymodel-bi3.pdf", width=16, height=12, bg = 'transparent', family="Palatino")
 
 # qgraph(A, theme = 'colorblind', groups = grp, color = c("white", "white"), nodeNames = Names, border.color = c("darkgray", "#F5651C", "#F5651C", "#F5651C", "#F5651C", "#F5651C", "darkgray", "darkgray", "darkgray"),border.width = 2, edge.color = c("#A9A9A9FF", "#DDDDDDFF", "#C8C8C8FF", "#F8a365", "#F8a365", "#F8a365", "#F8a365", "#F8a365", "#F8a365", "#F8a365", "#F8a365", "#F8a365", "#F8a365", "#F8a365", "#E0E0E0FF", "#CBCBCBFF", "#D8D8D8FF", "#D3D3D3FF", "#B1B1B1FF", "#D8D8D8FF", "#C6C6C6FF"), edge.width = 0.8, curve = 0.3, curveAll = T, label.color = "black", legend.cex = 1.2, asize= 4, layout = manual_layout)
 
-qgraph(A, theme = 'colorblind', groups = grp, color = c("white", "white"), nodeNames = Names, border.color = c("darkgray", "#F5651C", "#F5651C", "#F5651C", "#F5651C", "#F5651C", "darkgray", "darkgray", "darkgray"),border.width = 2, edge.color = edgecol, edge.width = 0.8, curve = 0.3, curveAll = T, label.color = "black", legend.cex = 1.2, asize= 4, layout = manual_layout)
+qgraph(A, theme = 'colorblind', groups = grp, color = c("white", "white"), nodeNames = Names, border.color = c("darkgray", "#F5651C", "darkgray", "darkgray", "darkgray", "#F5651C", "darkgray", "darkgray", "darkgray"),border.width = 2, edge.color = edgecol, edge.width = 0.8, curve = 0.3, curveAll = T, label.color = "black", legend.cex = 1.2, asize= 4, layout = manual_layout)
 
-dev.off()
+# dev.off()
 
 
 

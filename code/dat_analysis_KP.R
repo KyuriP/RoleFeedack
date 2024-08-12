@@ -273,7 +273,7 @@ comb_avg_res <- rbind(ori_avg_res, avg_res) |>
                 nos2 = rep(nos2, each = 5),
                 #jaccard = rep(jaccard, each = 5),
                 #specrad = rep(spec_rad, each = 5),
-                max_str_sd = rep(max_str_sd, each = 5),
+               # max_str_sd = rep(max_str_sd, each = 5),
                 #specrad_sd = rep(spec_rad_sd, each = 5),
                 #length = rep(length, each = 5),
                 deg_sd = rep(deg_sd, each = 5)) |>

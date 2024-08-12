@@ -31,6 +31,7 @@ low_idx <- lownet |> map(~ transmute(.x, matr = as.numeric(matr) + 1) |> unlist(
 # high_idx <-  highnet$matr |> as.numeric() + 1
 # low_idx <- lownet$matr |> as.numeric() + 1
 
+# for cycles
 high_net <- high_idx |> map(\(x) loop_info[x])
 low_net <- low_idx |> map(\(x) loop_info[x])
 
@@ -107,16 +108,17 @@ extract_edges <- function(cycle) {
 }
 
 
-# get the edge freq proportion
-high_edges <- high_net |>  purrr::map_depth(2, \(x) x$id |> extract_edges()) #|> map(~.x |> unlist() |> table() |> prop.table() |> as.data.frame())
+# get the edge freq proportion for the cycles
+high_edges <- high_net |>  purrr::map_depth(2, \(x) x$id |> extract_edges()) |> map(~.x |> unlist() |> table() |> prop.table() |> as.data.frame())
 low_edges <- low_net |>  purrr::map_depth(2, \(x) x$id |> extract_edges()) |> map(~.x |> unlist() |> table() |> prop.table() |> as.data.frame())
 # low_edges <- low_net |>  purrr::map(\(x) x$id |> extract_edges()) |> unlist() |> table()  |> prop.table() |> as.data.frame()
+
 
 top10_he <- high_edges |> map_dfr(~.x ,id = "t") |> summarize(freq_m = mean(Freq), freq_sd = sd(Freq), freq_me = 1.96 * freq_sd / sqrt(4), .by = Var1)
 top10_le <- low_edges |>  map_dfr(~.x ,id = "t") |> summarize(freq_m = mean(Freq), freq_sd = sd(Freq), freq_me = 1.96 * freq_sd / sqrt(4), .by = Var1)
 
-top10_he |> arrange(desc(freq_m)) |> filter(freq_m >= 0.035)
-top10_le |> arrange(desc(freq_m)) |> filter(freq_m >= 0.035)
+top10_he |> arrange(desc(freq_m))# |> filter(freq_m >= 0.035)
+top10_le |> arrange(desc(freq_m)) #|> filter(freq_m >= 0.035)
 
 plotdf |> arrange(desc(diff)) |> print(n=20)
 
@@ -135,8 +137,48 @@ plotdf <- top10_he |> full_join(top10_le, by = join_by(Var1)) |>
   ungroup()
 
 # overlapping edge (mot -> sui)
-plotdf$high_diff[c(57, 58)] <- FALSE
-plotdf$low_diff[c(1,2)] <- FALSE
+plotdf$high_diff[c(63,64)] <- TRUE # sui -> motor : not overlapping hence TRUE
+plotdf$low_diff[c(33,34,39,40)] <- TRUE # glt -> app, app -> ene: not overlapping
+
+
+
+
+### get the edge freq for the whole network
+high_net_whole <- high_idx |> map(\(x) all_networks[x] |>
+                                    reshape2::melt() |>
+                                    filter(value != 0 & Var1 != Var2) |>
+                                    transmute(edge_list = paste0(Var1, "-", Var2)) |>
+                                    table() |> prop.table() |> as.data.frame()) 
+low_net_whole <- low_idx |> map(\(x) all_networks[x] |>
+                                  reshape2::melt() |>
+                                  filter(value != 0 & Var1 != Var2) |>
+                                  transmute(edge_list = paste0(Var1, "-", Var2)) |>
+                                  table()|> prop.table() |> as.data.frame()) 
+
+top10_high_whole <- high_net_whole |> map_dfr(~.x ,id = "t") |> summarize(freq_m = mean(Freq), freq_sd = sd(Freq), freq_me = 1.96 * freq_sd / sqrt(4), .by = edge_list)
+top10_low_whole <- low_net_whole |>  map_dfr(~.x ,id = "t") |> summarize(freq_m = mean(Freq), freq_sd = sd(Freq), freq_me = 1.96 * freq_sd / sqrt(4), .by = edge_list)
+
+top10_high_whole |> arrange(desc(freq_m))# |> filter(freq_m >= 0.035)
+top10_low_whole |> arrange(desc(freq_m)) #|> filter(freq_m >= 0.035)
+
+
+plotdf_whole <- top10_high_whole |> full_join(top10_low_whole, by = join_by(edge_list)) |>
+  set_names(c("edge", "highnet_m","highnet_sd", "highnet_me", "lownet_m", "lownet_sd", "lownet_me")) |>
+  mutate(diff = highnet_m - lownet_m) |>
+  pivot_longer(!c(edge, diff), names_to = c("id", ".value"), names_sep = "_") |>
+  # by 2 (becuz of id) --> if want 7, then 14
+  mutate(high_diff = diff %in% sort(diff, decreasing = TRUE)[1:14],
+         low_diff = diff %in% sort(diff)[1:14],
+         m_min = m - sd,
+         m_max = m + sd) |>
+  group_by(id) |>   
+  # total 32 chocies, half top == 16
+  mutate(top10_freq = rank(-m) <= 13) |>
+  ungroup()
+
+
+
+
 
 # Custom x-axis labels
 # Mapping of numbers to characters
@@ -146,6 +188,8 @@ number_to_char <- c("1" = "anh", "2" = "sad", "3" = "slp", "4" = "ene", "5" = "a
 # Replace numbers with corresponding characters using str_replace_all
 plotdf$edge <- str_replace_all(plotdf$edge, number_to_char) |> as.factor()
 
+plotdf_whole$edge <- str_replace_all(plotdf_whole$edge, number_to_char) |> as.factor()
+
 # Create x-labels for edges with arrows
 custom_labels <- sapply(levels(plotdf$edge), function(x) {
   # Split the edge into two parts
@@ -154,9 +198,9 @@ custom_labels <- sapply(levels(plotdf$edge), function(x) {
   as.expression(bquote(.(parts[1]) %->% .(parts[2])))
 })
 
-
+df <- plotdf # plotdf_whole
 #edge_plot <- 
-ggplot(data = plotdf) +
+ggplot(data = df) +
   # Points and lines for freq
   geom_point(aes(x = edge, y = m, col = id), alpha = 0.8, shape=1, size = 1) +
   geom_line(aes(x = edge, y = m, col = id, group = id), alpha = 0.6) +
@@ -164,11 +208,11 @@ ggplot(data = plotdf) +
   # Line for diff values
   # Points for low_top TRUE
 
-  geom_point(data = plotdf %>% filter(id == "highnet", top10_freq), aes(x = edge, y = m), color = "coral", size = 2) +
-  geom_point(data = plotdf %>% filter(id == "lownet", top10_freq), aes(x = edge, y = m), color = "darkseagreen", size = 2) +
+  geom_point(data = df %>% filter(id == "highnet", top10_freq), aes(x = edge, y = m), color = "coral", size = 2) +
+  geom_point(data = df %>% filter(id == "lownet", top10_freq), aes(x = edge, y = m), color = "darkseagreen", size = 2) +
   # Points for high_top TRUE
-  geom_point(data = plotdf %>% filter(high_diff), aes(x = edge, y = diff, shape="Large diff. points"),color = "coral4", size = 3.5, alpha = 0.3) +
-  geom_point(data = plotdf %>% filter(low_diff), aes(x = edge, y = diff, shape = "Large diff. points"),color = "darkseagreen4", size = 3.5) +
+  geom_point(data = df %>% filter(high_diff), aes(x = edge, y = diff, shape="Large diff. points"),color = "coral4", size = 3.5, alpha = 0.3) +
+  geom_point(data = df %>% filter(low_diff), aes(x = edge, y = diff, shape = "Large diff. points"),color = "darkseagreen4", size = 3.5) +
   geom_line(aes(x = edge, y = diff, col = "diff", linetype="dashed"), group=1, linetype = 2, alpha = 0.5) +
   
   # Custom x-axis labels
@@ -203,16 +247,15 @@ ggplot(data = plotdf) +
 
 
 ## plot the networks
-
-high_A <- matrix(c(.30, 0.33, 0, 0, 0, 0, 0, 0, 0,
-                   0, .30, .14, .15, 0, .13, 0, 0, .15,
-                   0,  0, .30, .22, 0, 0, 0, 0, 0,
-                   .21, 0, 0, .30, 0, 0, 0.12, 0, 0,
-                   0, 0, .23, 0, .30, 0, 0, 0, 0,
-                   0, .13, 0, 0, .15, .30, 0, 0, 0,
-                   0, 0, 0, 0, 0, 0, .30, 0, 0,
-                   0, 0, 0, 0, 0, 0, 0, .30, .30,
-                   0, 0, 0, 0, 0, .22, 0, 0, .30), 9, 9, byrow = T)
+high_A <- matrix(c(.30, 0.00, 0, 0.21, 0, 0, 0, 0, 0,
+                   0.33, .30, 0, 0, 0, .13, 0, 0, 0,
+                   0,  0.14, .30, 0, 0.23, 0, 0, 0, 0,
+                   0, 0.15, 0.22, .30, 0, 0, 0, 0, 0,
+                   0, 0, 0, 0, .30, 0.15, 0, 0, 0,
+                   0, .13, 0, 0, 0, .30, 0, 0, 0.22,
+                   0, 0, 0, 0.12, 0, 0, .30, 0, 0,
+                   0, 0, 0, 0, 0, 0, 0, .30, 0,
+                   0, 0.15, 0, 0, 0, 0, 0, 0.30, .30), 9, 9, byrow = T)
 rownames(high_A) <- colnames(high_A) <- c("anh", "sad", "slp", "ene", "app", "glt", "con", "mot", "sui")
 
 manual_layout <- matrix(c( -1.00000000,-0.3697451,
@@ -224,15 +267,15 @@ manual_layout <- matrix(c( -1.00000000,-0.3697451,
                            0.99799343, 0.2837986,
                            1.00000000,-0.7135021,
                            0.41570786,-1.0000000), 9, 2, byrow=T)
-high_edge <- matrix(c(0, 1, 0, 0, 0, 0, 0, 0, 0,
+high_edge <- matrix(c(0, 0, 0, 1, 0, 0, 0, 0, 0,
+                       1, 0, 0, 0, 0, 0, 0, 0, 0,
+                       0,  0, 0, 0, 1, 0, 0, 0, 0,
                        0, 0, 1, 0, 0, 0, 0, 0, 0,
-                       0,  0, 0, 1, 0, 0, 0, 0, 0,
-                       1, 0, 0, 0, 0, 0, 1, 0, 0,
-                       0, 0, 0, 0, 0, 0, 0, 0, 0,
-                       0, 1, 0, 0, 0, 0, 0, 0, 0,
+                       0, 0, 0, 0, 0, 1, 0, 0, 0,
+                       0, 1, 0, 0, 0, 0, 0, 0, 1,
                        0, 0, 0, 0, 0, 0, 0, 0, 0,
                        0, 0, 0, 0, 0, 0, 0, 0, 0,
-                       0, 0, 0, 0, 0, 0, 0, 0, 0), 9, 9, byrow = T)
+                       0, 0, 0, 0, 0, 0, 0, 1, 0), 9, 9, byrow = T)
 high_edgecol <- ifelse(high_edge == 1, "brown", "coral")
 high_edgelty <- ifelse(high_edge == 1, 2, 1)
 
@@ -256,14 +299,14 @@ low_A <- matrix(c(.30, 0, 0, 0, 0, 0, 0, 0, 0,
 rownames(low_A) <- colnames(low_A) <- c("anh", "sad", "slp", "ene", "app", "glt", "con", "mot", "sui")
 
 low_edge <- matrix(c(0, 0, 0, 0, 0, 0, 0, 0, 0,
-                     0, 0, 0, 0, 0, 1, 0, 0, 0,
-                     0, 1, 0, 0, 0, 0, 0, 0, 0,
-                     0, 1, 0, 0, 0, 0, 0, 0, 0,
-                     0, 0, 0, 0, 0, 0, 0, 0, 0,
-                     0, 0, 0, 0, 0, 0, 1, 0, 0,
-                     0, 0, 0, 1, 0, 0, 0, 0, 0,
                      0, 0, 0, 0, 0, 0, 0, 0, 1,
-                     0, 0, 0, 0, 0, 0, 0, 0, 0), 9, 9, byrow = T)
+                     0, 0, 0, 1, 0, 0, 0, 0, 0,
+                     0, 1, 0, 0, 0, 0, 0, 0, 0,
+                     0, 0, 0, 1, 0, 0, 0, 0, 0,
+                     0, 0, 0, 0, 1, 0, 0, 1, 0,
+                     0, 0, 0, 0, 0, 0, 0, 0, 0,
+                     0, 0, 0, 0, 0, 0, 0, 0, 0,
+                     0, 0, 0, 0, 0, 1, 0, 0, 0), 9, 9, byrow = T)
 low_edgecol <- ifelse(low_edge == 1, "steelblue4", "darkseagreen")
 low_edgelty <- ifelse(low_edge == 1, 2, 1)
 
