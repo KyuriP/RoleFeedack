@@ -17,6 +17,34 @@ source("code/euler_stochastic2.R")
 source("code/mod_specification.R")
 source("code/gen_network.R")
 
+
+## first start with all network configurations
+# extract all networks
+all_networks <- generate_configurations(A, modifiable_edges)
+
+# extract all networks
+# all_networks_copy <- all_networks
+
+all_networks <- append(list(A), all_networks)
+# =======================================
+# Function to convert matrix to a character string
+matrix_to_string <- function(mat) {
+  paste(as.vector(mat), collapse = ",")
+}
+# Convert matrices to string representations
+matrix_strings <- sapply(all_networks, matrix_to_string)
+
+# Check for duplicates
+duplicate_indices <- which(duplicated(matrix_strings))
+
+# for results that start with no origianl A
+dup_ind <- duplicate_indices -1
+
+# i forgot that bidirectional edges can only produce 3 unique cases.
+real_all_networks <- all_networks[-c(duplicate_indices)]
+
+# =======================================
+
 # load data
 # res <- readRDS("data/res.rds")
 
@@ -30,9 +58,12 @@ res98304 <- readRDS("data/res_98304.rds") |> dplyr::mutate(mat = paste0(rep(8192
 res114688 <- readRDS("data/res_114688.rds") |> dplyr::mutate(mat = paste0(rep(98305:114688, each = 5),"-", c(400, 800, 1200, 1600, 2000)))
 res131071 <- readRDS("data/res_131071.rds") |> dplyr::mutate(mat = paste0(rep(114689:131071, each = 5),"-", c(400, 800, 1200, 1600, 2000)))
 
-res2 <- res16384 |> bind_rows(res32768, res49152, res65536, res81920, res98304, res114688, res131071)
-
+res2 <- res16384 |> bind_rows(res32768, res49152, res65536, res81920, res98304, res114688, res131071) 
 rm(res16384, res32768, res49152, res65536, res81920, res98304, res114688, res131071)
+
+# filter the duplicated ones
+new_res2 <- res2 |> filter(!stringr::str_detect(mat, paste0("^((", paste(dup_ind, collapse = "|"), ")-)")))
+
 
 avg_res <- res2 |>
   rowwise() |>
@@ -92,13 +123,7 @@ ori_avg_res <- original_res2 |>
   select(avg, mat) |>
   ungroup() # cancel rowwise
 
-# extract all networks
-all_networks <- generate_configurations(A, modifiable_edges)
 
-# extract all networks
-# all_networks_copy <- all_networks
-
-all_networks <- append(list(A), all_networks)
 
 # compute spectral radius
 spec_rad <- lapply(all_networks, sparsevar::spectralRadius) |> unlist()
@@ -236,35 +261,33 @@ nos2 <- common_cycle |> purrr::map_dbl(list("nos2", 1), .default = 0)
 
 
 # add it to the result
-# comb_res <- rbind(original_res, res) |>
-# mutate(nloop = rep(c(nloop_A, loop_numbers), each =3)) |>
-# comb_res <- rbind(original_res2, res2) |>
-#   dplyr::mutate(nloop = rep(loop_numbers, each =5),
-#          nos1 = rep(nos1, each = 5),
-#          nos2 = rep(nos2, each = 5),
-#          jaccard = rep(jaccard, each = 5),
-#          specrad = rep(spec_rad, each = 5),
-#          max_str_var = rep(max_str_var, each = 5)) |>
-#   pivot_longer(!c(nloop, mat, common_score), names_to = "sim", values_to = "value") |>
-#   dplyr::mutate(matr = stringr::str_extract_all(mat, "\\d+", simplify = T)[,1], 
-#          t = factor(stringr::str_extract_all(mat, "\\d+", simplify = T)[,2], levels = c("400", "800", "1200", "1600", "2000")),
-#          sim = stringr::str_extract_all(sim, "\\d+", simplify = T),
-#          # if loop number is higher than 20, then 20
-#          nloop = ifelse(nloop >= 20, 20, nloop)
-#          # group = case_when(
-#          #   common_score == 0 ~ "0",
-#          #   common_score <2 ~ "[1,2)",
-#          #   common_score <3 ~ "[2,3)",
-#          #   common_score <4 ~ "[3,4)",
-#          #   common_score <5 ~ "[4,5)",
-#          #   common_score <7 ~ "[5,6.5]")
-#   )
-#          # group = case_when(
-#          #   nloop == 0 ~ "0",
-#          #   nloop <= 5 ~ "[1, 5]",
-#          #   nloop <= 10 ~ "[6, 10]",
-#          #   nloop <= 15 ~ "[11, 15]",
-#          #   nloop >= 16 ~ "[16, 20+]"))
+comb_res <- rbind(original_res2, res2) |>
+  dplyr::mutate(nloop = rep(loop_numbers, each =5),
+         nos1 = rep(nos1, each = 5),
+         nos2 = rep(nos2, each = 5),
+         jaccard = rep(jaccard, each = 5),
+         specrad = rep(spec_rad, each = 5)) |>
+         #max_str_var = rep(max_str_var, each = 5)) |>
+  pivot_longer(!c(nloop, mat), names_to = "sim", values_to = "value") |>
+  dplyr::mutate(matr = stringr::str_extract_all(mat, "\\d+", simplify = T)[,1],
+         t = factor(stringr::str_extract_all(mat, "\\d+", simplify = T)[,2], levels = c("400", "800", "1200", "1600", "2000")),
+         sim = stringr::str_extract_all(sim, "\\d+", simplify = T),
+         # if loop number is higher than 20, then 20
+         nloop = ifelse(nloop >= 20, 20, nloop)
+         # group = case_when(
+         #   common_score == 0 ~ "0",
+         #   common_score <2 ~ "[1,2)",
+         #   common_score <3 ~ "[2,3)",
+         #   common_score <4 ~ "[3,4)",
+         #   common_score <5 ~ "[4,5)",
+         #   common_score <7 ~ "[5,6.5]")
+  )
+         # group = case_when(
+         #   nloop == 0 ~ "0",
+         #   nloop <= 5 ~ "[1, 5]",
+         #   nloop <= 10 ~ "[6, 10]",
+         #   nloop <= 15 ~ "[11, 15]",
+         #   nloop >= 16 ~ "[16, 20+]"))
 
 
 comb_avg_res <- rbind(ori_avg_res, avg_res) |>
@@ -291,13 +314,9 @@ comb_avg_res <- rbind(ori_avg_res, avg_res) |>
                   nos1 <0.20 ~ "<0.20",
                   nos1 >= 0.20 ~ "0.20+",
                 )
-  )
-                # group = case_when(
-                #   nloop == 0 ~ "0",
-                #   nloop <= 5 ~ "[1, 5]",
-                #   nloop <= 10 ~ "[6, 10]",
-                #   nloop <= 15 ~ "[11, 15]",
-                #   nloop >= 16 ~ "[16, 20+]"))
+  ) |>
+  # remove the same matrices (due to the bidirectional one mistake 2^15 * 3 = 98304)
+  filter(!as.numeric(matr) %in% dup_ind)
 
 plot(rel_strength$Mean, sd_info$sumsdStr)
 plot(jaccard, deg_sd)
@@ -332,7 +351,7 @@ p2 <- comb_avg_res |> filter(t==1200, nloop!=0) |> # decide time points later
   # scale_color_gradientn(colors = c("#172869", "#0A5396", "#037DB9", "#12A0B3", "#48C0AD", "#48C0AD", "#48C0AD", "#BBD9A8", "#E9CD98", "#E9A880", "#F26F44", "#FF3200")) +
   # scale_color_gradient(low = "navy", high = "green") +
   facet_wrap(~factor(nloop, levels=c("1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20+")), nrow = 5) +
-  labs(x = "Total variability in connection strength", y = "Average aggregated symptom level", color = "Feedback loop\noverlap level") +
+  labs(x = expression("Weighted degree variability ("~sigma[tot]~")"), y = "Average aggregated symptom level", color = "Feedback loop\noverlap level") +
   theme_bw() +
   guides(colour=guide_colourbar(barwidth=30,label.position="bottom"))+
   theme(legend.position = "bottom",
@@ -382,8 +401,8 @@ grid.draw(z)
 
 
 
-pmain <- comb_res |> 
-  ggplot(aes(x = factor(nloop, labels = c(0:19, "20+")), y = value, fill= t, color = t)) +
+pmain <- comb_avg_res |> 
+  ggplot(aes(x = factor(nloop, labels = c(0:19, "20+")), y = avg, fill= t, color = t)) +
   geom_boxplot(width = .7,
                outlier.alpha = 0.1,
                outlier.size = 0.6,
@@ -526,19 +545,18 @@ z.pred.loess <- matrix(predict(fit.loess, newdata = xy),
 
 # create the fitted points for droplines to the surface
 # fitpoints <- predict(fit)
-dat.sam <- selected_data |> sample_frac(0.03) #balanced_df |> sample_frac(0.3)
+dat.sam <- selected_data |> sample_frac(0.05) #balanced_df |> sample_frac(0.3)
 x.sam <- dat.sam$loop_numbers
 y.sam <- dat.sam$deg_sd 
 z.sam <- dat.sam$avg
   
-
-pdf(file = "figure/3dplot_KP3.pdf", bg = 'transparent', family="Palatino", width = 13, height = 7)
+# pdf(file = "figure/3dplot_KP4.pdf", bg = 'transparent', family="Palatino", width = 13, height = 7)
 
 par(mfrow=c(1,2), mar=c(2, 2, 3 ,1.2), oma=c(0,0,1,0))
 # 3dplot-1
 scatter3D(x, y, z, pch = 20, cex = .8, colvar = NULL, col=NULL, alpha = 0,
           theta = -45, phi = 20, bty="b",
-          xlab = "Number of feedback loop", ylab = "Total variability", zlab = "Avg. symptom level",
+          xlab = "Number of feedback loop", ylab = "Weighted degree variability", zlab = "Avg. symptom level",
           cex.lab = 1.55,  cex.main = 1.7, main = "(a)",
           len = 3,
           surf = list(x = x.pred, y = y.pred, z = z.pred.loess, facets = TRUE,  col=ramp.col(col = c("darkseagreen4","khaki"), n = 300, alpha=0.5), 
@@ -551,7 +569,7 @@ scatter3D(x.sam, y.sam, z.sam, pch = 20, cex = .9, colvar = NULL, col="dodgerblu
 # 3dplot-2
 scatter3D(x, y, z, pch = 20, cex = .8, colvar = NULL, col=NULL, alpha = 0,
           theta = 125, phi = 20, bty="b",
-          xlab = "Number of feedback loop", ylab = "Total variability", zlab = "Avg. symptom level",
+          xlab = "Number of feedback loop", ylab = "Weighted degree variability", zlab = "Avg. symptom level",
           cex.lab = 1.5,  cex.main = 1.7, main = "(b)",
           surf = list(x = x.pred, y = y.pred, z = z.pred.loess, facets = TRUE,  col=ramp.col(col = c("darkseagreen4","khaki"), n = 300, alpha=0.5), 
                       border=alpha("darkgray", .1)))
@@ -562,6 +580,6 @@ scatter3D(x.sam, y.sam, z.sam, pch = 20, cex = .9, colvar = NULL, col="dodgerblu
 #           theta = -40, phi = 25, bty="b", add =T, cex.symbols = 5,  cex.axis = 5)
 
 
-dev.off()
+# dev.off()
 
   

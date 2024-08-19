@@ -1,3 +1,14 @@
+# Step 1: Calculate the mean frequency for each edge in the "highnet" group
+edge_order <- plotdf %>%
+  filter(id == "highnet") %>%
+  group_by(edge) %>%
+  summarize(mean_m = mean(m)) %>%
+  arrange(desc(mean_m)) %>%
+  pull(edge)
+
+# Step 2: Reorder the `edge` factor based on the calculated means
+plotdf <- plotdf %>%
+  mutate(edge = factor(edge, levels = edge_order))
 
 # Main plot without legend
 main_plot <- ggplot(data = plotdf) +
@@ -49,7 +60,7 @@ legend <- cowplot::get_plot_component(
     scale_x_discrete(labels = custom_labels) +
     scale_color_manual(values = c("highnet" = "coral", "lownet" = "darkseagreen"), 
                        labels = c("High symptom level network", "Low symptom level network")) +
-    scale_shape_manual(values = c("Large diff. points" = 8)) +
+    scale_shape_manual(values = c("Large diff. points" = 8), labels = c("Sig. high-frequency points")) +
     scale_linetype_manual(values = c("diff" = 2), labels = c("Difference (high-low)"))+
     labs(y = "Proportion of edge frequency", x = "Edges", color = "", linetype = "", shape = "") +
     theme_pubr() +
@@ -81,6 +92,6 @@ combined_plot <- cowplot::plot_grid(main_plot, diff_plot, ncol = 1, align = "v",
 # Combine the plot and the legend
 final_plot <- cowplot::plot_grid(combined_plot, legend, NULL, ncol = 1, rel_heights = c(8, 1, 0.5))
 
-# ggsave("figure/edge_plot2.pdf", plot = final_plot, width = 40, height = 30, units = "cm", dpi = 300)
+# ggsave("figure/edge_plot4.pdf", plot = final_plot, width = 40, height = 30, units = "cm", dpi = 300)
 
 

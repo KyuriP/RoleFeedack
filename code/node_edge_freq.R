@@ -6,8 +6,8 @@ ts <- c(800, 1200, 1600, 2000)
 # high level networks
 highnet <- ts |> map(function(x) {
   comb_avg_res |>
-    filter(t == x) |>
-    slice_max(order_by = avg, n = 100) 
+    filter(t == x, nloop!=0) |>
+    slice_max(order_by = avg, n = 1000) 
 }) |> set_names(paste0("t", ts)) #|>
   bind_rows(.id = "id")
 
@@ -15,7 +15,7 @@ highnet <- ts |> map(function(x) {
 lownet <- ts |> map(function(x) {
   comb_avg_res |>
     filter(t == x, nloop!=0) |>
-    slice_min(order_by = avg, n = 100) 
+    slice_min(order_by = avg, n = 1000) 
 }) |> set_names(paste0("t", ts)) #|>
  bind_rows(.id = "id")
 
@@ -120,7 +120,6 @@ top10_le <- low_edges |>  map_dfr(~.x ,id = "t") |> summarize(freq_m = mean(Freq
 top10_he |> arrange(desc(freq_m))# |> filter(freq_m >= 0.035)
 top10_le |> arrange(desc(freq_m)) #|> filter(freq_m >= 0.035)
 
-plotdf |> arrange(desc(diff)) |> print(n=20)
 
 plotdf <- top10_he |> full_join(top10_le, by = join_by(Var1)) |>
   set_names(c("edge", "highnet_m","highnet_sd", "highnet_me", "lownet_m", "lownet_sd", "lownet_me")) |>
@@ -137,10 +136,10 @@ plotdf <- top10_he |> full_join(top10_le, by = join_by(Var1)) |>
   ungroup()
 
 # overlapping edge (mot -> sui)
-plotdf$high_diff[c(63,64)] <- TRUE # sui -> motor : not overlapping hence TRUE
-plotdf$low_diff[c(33,34,39,40)] <- TRUE # glt -> app, app -> ene: not overlapping
+plotdf$high_diff[c(11, 12, 37, 38, 63,64)] <- TRUE #sad -> glt, glt -> sad, sui -> motor : not overlapping hence TRUE
+plotdf$low_diff[c(29,30,9,10)] <- TRUE # ene -> con, sad -> ene: not overlapping
 
-
+plotdf$low_diff[c(43, 44, 1,2, 21, 22, 17,18)] <- FALSE # glt -> mot, anh ->sad, ene -> anh : they are not freq points. slp -> ene overlapping hence FALSE
 
 
 ### get the edge freq for the whole network
@@ -197,6 +196,7 @@ custom_labels <- sapply(levels(plotdf$edge), function(x) {
   # Create the expression with the correct format
   as.expression(bquote(.(parts[1]) %->% .(parts[2])))
 })
+
 
 df <- plotdf # plotdf_whole
 #edge_plot <- 
@@ -268,43 +268,43 @@ manual_layout <- matrix(c( -1.00000000,-0.3697451,
                            1.00000000,-0.7135021,
                            0.41570786,-1.0000000), 9, 2, byrow=T)
 high_edge <- matrix(c(0, 0, 0, 1, 0, 0, 0, 0, 0,
-                       1, 0, 0, 0, 0, 0, 0, 0, 0,
+                       1, 0, 0, 0, 0, 1, 0, 0, 0,
                        0,  0, 0, 0, 1, 0, 0, 0, 0,
                        0, 0, 1, 0, 0, 0, 0, 0, 0,
                        0, 0, 0, 0, 0, 1, 0, 0, 0,
                        0, 1, 0, 0, 0, 0, 0, 0, 1,
                        0, 0, 0, 0, 0, 0, 0, 0, 0,
                        0, 0, 0, 0, 0, 0, 0, 0, 0,
-                       0, 0, 0, 0, 0, 0, 0, 1, 0), 9, 9, byrow = T)
+                       0, 1, 0, 0, 0, 0, 0, 1, 0), 9, 9, byrow = T)
 high_edgecol <- ifelse(high_edge == 1, "brown", "coral")
 high_edgelty <- ifelse(high_edge == 1, 2, 1)
 
-# pdf(file = "figure/highnet.pdf", width=5, height=5, bg = 'transparent', family="Palatino")
+pdf(file = "figure/highnet.pdf", width=5, height=5, bg = 'transparent', family="Palatino")
 
 qgraph(high_A != 0, layout = manual_layout, edge.color = high_edgecol, lty = high_edgelty, label.color = "black", asize= 5, fade =F, vsize=10, esize = 2)
 
-# dev.off()
+dev.off()
 
 # low level network
 
 low_A <- matrix(c(.30, 0, 0, 0, 0, 0, 0, 0, 0,
-                   0, .30, 0, 0, 0, .13, 0, 0, .15,
-                   0,  .14, .30, .22, 0, 0, 0, 0, 0,
-                   0, .15, 0, .30, 0, 0, 0, 0, 0,
-                   0, 0, .23, .17, .30, 0, 0, 0, 0,
-                   0, 0, 0, 0, .15, .30, .20, .15, 0,
-                   0, 0, 0, .12, 0, 0, .30, 0, 0,
-                   0, 0, 0, 0, 0, 0, .17, .30, 0,
+                   0, .30, 0, .15, 0, .13, 0, 0, .15,
+                   0,  .14, .30, 0, 0, 0, 0, 0, 0,
+                   0, .15, 0, .30, .17, 0, .12, 0, 0,
+                   0, 0, 0, 0, .30, 0, 0, 0, 0,
+                   0, .13, 0, 0, .15, .30, .20, 0, 0,
+                   0, 0, 0, .12, 0, .20, .30, 0, 0,
+                   0, 0, 0, 0, 0, 0, 0, .30, 0,
                    0, 0, 0, 0, 0, .22, 0, 0, .30), 9, 9, byrow = T)
 rownames(low_A) <- colnames(low_A) <- c("anh", "sad", "slp", "ene", "app", "glt", "con", "mot", "sui")
 
 low_edge <- matrix(c(0, 0, 0, 0, 0, 0, 0, 0, 0,
-                     0, 0, 0, 0, 0, 0, 0, 0, 1,
-                     0, 0, 0, 1, 0, 0, 0, 0, 0,
-                     0, 1, 0, 0, 0, 0, 0, 0, 0,
-                     0, 0, 0, 1, 0, 0, 0, 0, 0,
-                     0, 0, 0, 0, 1, 0, 0, 1, 0,
+                     0, 0, 0, 1, 0, 0, 0, 0, 1,
                      0, 0, 0, 0, 0, 0, 0, 0, 0,
+                     0, 0, 0, 0, 0, 0, 1, 0, 0,
+                     0, 0, 0, 0, 0, 0, 0, 0, 0,
+                     0, 0, 0, 0, 1, 0, 0, 0, 0,
+                     0, 0, 0, 0, 0, 1, 0, 0, 0,
                      0, 0, 0, 0, 0, 0, 0, 0, 0,
                      0, 0, 0, 0, 0, 1, 0, 0, 0), 9, 9, byrow = T)
 low_edgecol <- ifelse(low_edge == 1, "steelblue4", "darkseagreen")
@@ -317,3 +317,67 @@ low_edgelty <- ifelse(low_edge == 1, 2, 1)
 qgraph(low_A!=0, layout = manual_layout, edge.color = low_edgecol, lty =low_edgelty, label.color = "black", asize= 5, fade = F, vsize=10, esize = 2)
 
 # dev.off()
+
+
+
+
+# edge freq change by time 
+high_edges$t800
+low_edges$t800
+
+edgedf <- high_edges$t800|> full_join(low_edges$t800, by = join_by(Var1)) |>
+  set_names(c("edge", "highnet", "lownet")) |>
+  reshape2::melt(value.name = "freq", variable.name = "id")
+  
+
+edgedf_high <- high_edges |> list_rbind(names_to = "t") |>
+  set_names(c("time", "edge", "freq"))
+
+edgedf_low <- low_edges |> list_rbind(names_to = "t") |>
+  set_names(c("time", "edge", "freq"))
+
+# Mapping of numbers to characters
+number_to_char <- c("1" = "anh", "2" = "sad", "3" = "slp", "4" = "ene", "5" = "app", 
+                    "6" = "glt", "7" = "con", "8" = "mot", "9" = "sui")
+
+# Replace numbers with corresponding characters using str_replace_all
+edgedf$edge <- str_replace_all(edgedf$edge, number_to_char) |> as.factor()
+edgedf_high$edge <- str_replace_all(edgedf$edge, number_to_char) |> as.factor()
+edgedf_low$edge <- str_replace_all(edgedf$edge, number_to_char) |> as.factor()
+
+common_theme <-   theme(legend.position = "bottom",
+                        # space between legend and plot
+                        text = element_text(size = 23, family="Palatino"),
+                        axis.text.x = element_text(angle = 80, vjust = 0.5),
+                        legend.text=element_text(size=22),
+                        legend.key.size = unit(4,"line"),
+                        # legend.box = "vertical",  # Ensure legends are arranged horizontally
+                        legend.margin = margin(0, 0, 0, 0), # Adjust margin inside the legend box
+                        legend.key.spacing.y = unit(-0.7, "cm"),
+                        legend.key.spacing.x = unit(0.7, "cm"),
+                        axis.title.y = element_text(vjust = +3, size =26),
+                        axis.title.x = element_text(vjust = -0.75, size =26),
+                        plot.margin = margin(t = 2, r = 1, b = 1, l = 1, "cm"))
+
+ggplot(data = edgedf) +
+  # Points and lines for freq
+  geom_point(aes(x = edge, y = freq, col = id), alpha = 0.8, shape=1, size = 1) +
+  geom_line(aes(x = edge, y = freq, col = id, group = id), alpha = 0.6) +
+  # Custom x-axis labels
+  scale_x_discrete(labels = custom_labels) +
+  scale_color_manual(values = c("highnet" = "coral", "lownet" = "darkseagreen"), labels = c("High symptom level networks", "Low symptom level networks"))+
+  labs(y = "Proportion of edge frequency", x = "Edges", color = "", linetype = "", shape = "") +
+  theme_pubr() +
+  common_theme
+
+ggplot(data = edgedf_low) +
+  # Points and lines for freq
+  geom_point(aes(x = edge, y = freq, col = time), alpha = 0.8, shape=1, size = 1) +
+  geom_line(aes(x = edge, y = freq, col = time, group = time), alpha = 0.6) +
+  # Custom x-axis labels
+  scale_x_discrete(labels = custom_labels) +
+  # scale_color_manual(values = c("highnet" = "coral", "lownet" = "darkseagreen"), labels = c("High symptom level networks", "Low symptom level networks"))+
+  labs(y = "Proportion of edge frequency", x = "Edges", color = "") +
+  theme_pubr() +
+  common_theme
+

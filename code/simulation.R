@@ -39,6 +39,7 @@ modifiable_edges <- list(c(2,1), c(2,3), c(2,4), c(2,6), c(2,9), c(3,4), c(3,5),
 
 all_networks <- generate_configurations(A, modifiable_edges)
 
+
 # get the number of loops 
 # loops <- list()
 # for (i in 1:length(all_networks)){
