@@ -381,3 +381,47 @@ ggplot(data = edgedf_low) +
   theme_pubr() +
   common_theme
 
+
+## =================================================================
+## check whether bidirectional edges also happening in low networks
+## between sad -- glt
+
+# Define the positions to check
+positions_to_check <- list(c(2, 6), c(6, 2))
+
+# Use purrr::map to check if the elements at the specified positions are not zero in each matrix
+bidirect_high <- high_idx |> map(\(x) all_networks[x] |>
+                              imap(~ all(map_lgl(positions_to_check, function(pos) .x[pos[1], pos[2]] != 0))) |> unlist() |> sum()
+) |> unlist() |> as_tibble() |> summarize(Mean = mean(value/1000), SD = sd(value/1000))
+
+bidirect_low <- low_idx |> map(\(x) all_networks[x] |>
+                                   imap(~ all(map_lgl(positions_to_check, function(pos) .x[pos[1], pos[2]] != 0))) |> unlist() |> sum()
+) |> unlist() |> as_tibble() |> summarize(Mean = mean(value/1000), SD = sd(value/1000))
+
+# visualize it in barplot
+p_bidirect <- bidirect_high |> bind_rows(bidirect_low, .id = "id") |>
+ggplot() +
+  geom_bar(aes(x= id, y = Mean, fill = id), stat = "identity", alpha = 0.3) +
+  geom_errorbar(aes(x=id, ymin = Mean -SD, ymax= Mean +SD, color = id), width = 0.5, linewidth =0.5) +
+  geom_text(aes(x = id, y = Mean, label = round(Mean, 2)), 
+            position = position_stack(vjust = 0.5), 
+            colour = "white", size = 5.5, family="Palatino") +
+  scale_color_manual(values = c("coral", "darkseagreen")) +
+  scale_fill_manual(values = c("coral", "darkseagreen")) +
+  scale_x_discrete(labels = c("High net", "Low net")) +
+  labs(x = "", y = "", color = "", fill = "", title = expression("Prop. of feedback loop glt" %<->% "sad")) +
+  theme_bw() +
+  coord_flip()+
+  theme(legend.position = "none",
+        text = element_text(family="Palatino"),
+        plot.title = element_text(size = 16, hjust = 0.5),
+        axis.text.x = element_blank(),
+        axis.text.y = element_text(size = 15),
+        # remove ticks
+        axis.ticks.x=element_blank(),
+        axis.ticks.y=element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        strip.background = element_blank(),
+        panel.border = element_rect(colour = "lightgray", fill = NA))
+

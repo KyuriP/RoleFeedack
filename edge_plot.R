@@ -94,4 +94,5 @@ final_plot <- cowplot::plot_grid(combined_plot, legend, NULL, ncol = 1, rel_heig
 
 # ggsave("figure/edge_plot4.pdf", plot = final_plot, width = 40, height = 30, units = "cm", dpi = 300)
 
-
+comb_final <-final_plot + patchwork::inset_element(p_bidirect, left = 0.70, bottom = 0.83, right = 0.96, top = 1.00)
+# ggsave("figure/edge_plot_comb.pdf", plot = comb_final, width = 45, height = 33, units = "cm", dpi = 300)

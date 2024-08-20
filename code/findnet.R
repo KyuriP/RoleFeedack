@@ -30,6 +30,7 @@ qgraph(all_networks[[45291]], layout = manual_layout, edge.color = "darkseagreen
 
 # check the loop info
 loop_info[[35751]]; loop_info[[54598]]
+loop_info[[10419]]; loop_info[[45291]]
 
 
 # dev.off()
