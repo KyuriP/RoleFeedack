@@ -29,7 +29,7 @@ main_plot <- ggplot(data = plotdf) +
         plot.margin = margin(t = 2, r = 2, b = 0, l = 2, "cm"))
 
 # Diff plot with x-axis on top
-diff_plot <-ggplot(data = plotdf) +
+diff_plot <- ggplot(data = plotdf) +
   geom_line(aes(x = edge, y = diff), group = 1, linetype = "dashed", color = "gray", alpha = 0.7) +
   geom_point(data = plotdf %>% filter(high_diff), aes(x = edge, y = diff, color = "coral4"), size = 3.5, shape = 8, alpha = 0.3) +
   geom_point(data = plotdf %>% filter(low_diff), aes(x = edge, y = diff), color = "darkseagreen4", size = 3.5, shape = 8, alpha = 0.3) +
