@@ -3,12 +3,24 @@ library(modelr)
 library(dplyr)
 library(purrr)
 library(tidyr)
-library(ggplot2)
-library(qgraph)
+library(magrittr)
+library(haven)
 #library(psychonetrics)
-# library(bootnet)
+library(bootnet)
 library(rootSolve)
 library(deSolve)
-library(ggpubr)
-library(magrittr)
 library(stringr)
+
+# packages for plotting
+library(ggplot2)
+library(ggridges) # geom_ridges
+library(PupillometryR) # geom_flat_violin
+library(ggthemes)
+library(ggpubr) 
+library(plot3D) # for 3d regression plane
+library(ggExtra) # for adding marginal distributions
+library(grid) # for adding the overarching facet title
+library(gtable) # for adding the overarching facet title
+library(patchwork)
+library(qgraph)
+

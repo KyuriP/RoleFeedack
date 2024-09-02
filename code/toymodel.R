@@ -1,15 +1,13 @@
-# load packages
-library(dplyr)
-library(purrr)
-library(tidyr)
-library(ggplot2)
-library(patchwork)
-library(qgraph)
-library(bootnet)
-library(ggpubr)
-library(magrittr)
-library(haven)
-library(stringr)
+## =========================================================
+## Reference Network Model & Algorithm Illustration
+##
+## This script generates the reference network plot used in the paper 
+## and creates the example networks that demonstrate how the algorithm 
+## functions in practice.
+## =========================================================
+
+## install packages
+source("code/libraries.R")
 
 
 ## weigthed adjacency matrix
@@ -35,6 +33,7 @@ A <- matrix(c( .30, 0, 0, 0, 0, 0, 0, 0, 0,
                0, 0, 0, 0, 0, 0, 0, .3, 0.30), 9, 9, byrow = T)
 rownames(A) <- colnames(A) <- c("anh", "sad", "slp", "ene", "app", "glt", "con", "mot", "sui")
 
+# edge color matrix
 A_col <- matrix(c( 1, 0, 0, 0, 0, 0, 0, 0, 0,
                    0, 1, 0, 0, 0, 1, 0, 0, 0,
                    0,  0, 1, 0, 0, 0, 0, 0, 0,
