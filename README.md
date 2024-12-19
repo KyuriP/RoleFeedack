@@ -1,9 +1,6 @@
 <img src="https://github.com/KyuriP/RoleFeedack/blob/main/figure/feedback_logo.png" alt="Feedbaack Logo" width="100" align="left" style="margin-right: 15px;">
 
-# The Role of Feedback Loops 
-
-This repository contains the analysis scripts and figures used in the paper:  
-**The Role of Feedback Loops in Dynamical Symptom Networks**
+# The Role of Feedback Loops in Dynamical Symptom Networks
 
 
 
