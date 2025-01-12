@@ -1,0 +1,274 @@
+---
+title: "The Role of Feedback Loops in Dynamical Symptom Networks"
+# subtitle: "Taking a Computational Modeling Approach"
+institute: "Feb 7 2025"  #change date
+author: "Kyuri Park"
+format: 
+  revealjs:
+    embed-resources: true
+    #smaller: true
+    scrollable: true
+    footer: "Computational Science Lab - University of Amsterdam"
+    theme: [default, custom.scss]
+    #slide-number: c/t
+    transition: fade
+    transition-speed: slow
+    background-transition: fade
+    preview-links: auto
+    html-math-method: mathjax
+    logo: img/csl_logo.png
+
+#     auto-stretch: false
+# from: markdown+emoji
+title-slide-attributes:
+    data-background-image: img/title_bg2.png
+    data-background-size: "cover"
+    data-background-opacity: "0.95"
+bibliography: reference.bib
+---
+
+## Motivation
+
+::::: columns
+::: {.column width="50%"}
+> "Once depression or anxiety hits, a ***feedback loop from hell*** can begin. We start to feel depressed about being depressed, anxious about feeling anxious. Fighting a negative experience is a negative experience in itself. To prevent this feedback loop, we should accept our pain, not fight it." — **Mark Manson, The Subtle Art of Not Giving a F\*ck**
+:::
+
+::: {.column width="50%"}
+![](img/book.jpg)
+:::
+:::::
+
+## Motivation (cont.)
+
+:::::: columns
+::: {.column width="50%"}
+As with most systemic conditions, feedback loops are likely to play a key role in explaining the observed patterns of depression. [@wittenborn2016depression]
+
+Mental disorder is produced by direct causal interactions between symptoms that reinforce each other via feedback loops. [@borsboom2013network].
+:::
+
+:::: {.column width="50%"}
+::: r-stack
+![](img/cycle/cycle1.png){fig-align="center" width="450"}
+
+![](img/cycle/cycle2.png){.fragment fig-align="center" width="450"}
+
+![](img/cycle/cycle3.png){.fragment fig-align="center" width="450"}
+
+![](img/cycle/cycle4.png){.fragment fig-align="center" width="450"}
+
+![](img/cycle/cycle5.png){.fragment fig-align="center" width="450"}
+
+![](img/cycle/cycle2.png){.fragment fig-align="center" width="450"}
+
+![](img/cycle/cycle3.png){.fragment fig-align="center" width="450"}
+
+![](img/cycle/cycle4.png){.fragment fig-align="center" width="450"}
+
+![](img/cycle/cycle5.png){.fragment fig-align="center" width="450"}
+:::
+::::
+::::::
+
+::: notes
+The feedback loop, or what’s often called the "vicious cycle" in mental health, is something that’s been recognized for a long time, especially by empirical researchers and psychiatrists. Patients often talk about how they get stuck in these cycles, and how it is so challenging to brek free from for example a depressed state. The problem, though, is that we still don’t fully understand what’s happening beneath the surface. Where exactly do these feedback loops exist and how do they drive this system? That’s really the core question that we were hoping to learn from this study.
+:::
+
+## Toy model
+
+Adjacency matrix (for the weighted directed graph) determined based on insights from some empirical studies [@ramos-vera_network_2021; @lee_measurement_2023; @jing_comparing_2023].
+
+::: r-stack
+![](img/netA.png){.absolute .fragment .semi-fade-out left="0" top="225" width="450" fragment-index="1"} ![](img/toymodel.png){.absolute .fragment .fade-in right="0" top="225" width="600" fragment-index="1"}
+:::
+
+::: {#equation}
+**Model equation** \begin{equation} 
+dS_{i} = S_{i}(1-S_{i})\left(\beta_i + \alpha_{ii} S_{i} + \sum_{\substack{j=1\\j \neq i}}^9\alpha_{ji}S_{j}(1+\delta_iS_{i}^{2})\right) dt + \sigma_i dW_{i} , i=1, 2, \dots, 9.
+\end{equation}
+:::
+
+**Description of parameters**
+
+| Parameter | Description |
+|--------------------------|:---------------------------------------------|
+| $\beta_i$ | The sensitivity level of $S_i$ to external triggering factors. |
+| $\alpha$ | The elements of the weight matrix $\mathbf{A}$. <BR> $\alpha_{ij}$ refers to the weight of the edge $S_i \rightarrow S_j$ and $\alpha_{ii}$ refers to the weight of the self-reinforcing loop of $S_i$. |
+| $\delta_i$ | The boosting factor that amplifies the effect of other $S_j$'s on $S_i$. |
+| $\sigma_i$ | The scaling factor that controls the strength of the stochastic term. |
+
+## Simulation steps
+
+:::::: columns
+::: {.column width="40%"}
+```{mermaid}
+
+flowchart TD
+        A(1. Set reference model) --> B(2. Generate synthetic networks)
+        B --> C(3. Extract topological features)
+        C --> D(4. Simulate symptom dynamics)
+
+    %% Apply different colors to each node
+    style A fill:#F4B9AD,stroke:#333,stroke-width:2px;
+    style B fill:#CADBF9,stroke:#333,stroke-width:2px;  
+    style C fill:#CADBF9,stroke:#333,stroke-width:2px;  
+    style D fill:#CADBF9,stroke:#333,stroke-width:2px;  
+
+    %% Apply different colors to arrows
+
+```
+:::
+
+:::: {.column width="60%"}
+::: custom-font-size
+Our reference model:
+
+![](img/toymodel/toymodel-0.png){.fragment .fade-in .absolute width="400" top="50" right="60"}
+:::
+::::
+::::::
+
+## Simulation steps
+
+::::::: columns
+::: {.column width="40%"}
+```{mermaid}
+
+flowchart TD
+        A(1. Set reference model) --> B(2. Generate synthetic networks)
+        B --> C(3. Extract topological features)
+        C --> D(4. Simulate symptom dynamics)
+
+    %% Apply different colors to each node
+    style A fill:#CADBF9,stroke:#333,stroke-width:2px;
+    style B fill:#F4B9AD,stroke:#333,stroke-width:2px;  
+    style C fill:#CADBF9,stroke:#333,stroke-width:2px;  
+    style D fill:#CADBF9,stroke:#333,stroke-width:2px;  
+
+
+```
+:::
+
+::::: {.column width="60%"}
+:::: custom-font-size
+Our reference model:
+
+::: r-stack
+![](img/toymodel/toymodel-0.png){.absolute top="50" right="60" width="400"}
+
+![](img/toymodel/toymodel-1.png){.fragment .absolute width="400" top="50" right="60" fragment-index="2"}
+
+![](img/toymodel/toymodel-2.png){.fragment .absolute width="400" top="50" right="60" fragment-index="3"}
+
+![](img/toymodel/toymodel-0.png){.fragment .absolute width="400" top="50" right="60" fragment-index="4"}
+:::
+
+<br> <br> <br> <br> <br> <br> <br> <br> <br> <br> <br> <br> <br> <br>
+
+- The total number of possible network configurations is $2^n$, where $n$ is the number of *independent* edges.
+
+- There are 17 edges --- two are *dependent*: a feedback loop between **sad** and **guilt**).
+
+- The feedback loop itself can have [3 distinct configurations.]{.fragment fragment-index="1" .highlight-orange}
+
+- The total number of unique network configurations derivable from our example network is [***$2^{15} \times 3 =$ 98,304***.]{.fragment fragment-index="5"}
+::::
+
+![](img/algorithm1.png)
+:::::
+:::::::
+
+::: notes
+Given the reference network structure, we explore all possible network configurations by systematically altering the directions of edges. The total number of possible network configurations is $2^n$, where $n$ is the number of *independent* edges.
+
+In our example, there are 17 edges, but 2 are *dependent* due to a feedback loop between **sad** and **guilt**. This reduces the number of independent edges to 15.
+
+The feedback loop itself can have 3 distinct configurations: (1) both edges in their original direction, maintaining the loop, (2) one edge flipped while the other remains unchanged, causing both edges to point in the same direction, or (3) the other edge flipped, reversing the direction. Instead of the 4 possible combinations ($2^2$), this loop yields only 3 unique configurations.
+
+The remaining 15 independent edges can produce $2^{15}$ possible configurations. Combining these with the 3 unique configurations of the feedback loop, the total number of unique network configurations derivable from our example network is $2^{15} \times 3 =$ 98,304.
+:::
+
+
+## Simulation steps
+
+:::::: columns
+::: {.column width="40%"}
+```{mermaid}
+
+flowchart TD
+        A(1. Set reference model) --> B(2. Generate synthetic networks)
+        B --> C(3. Extract topological features)
+        C --> D(4. Simulate symptom dynamics)
+
+    %% Apply different colors to each node
+    style A fill:#CADBF9,stroke:#333,stroke-width:2px;
+    style B fill:#CADBF9,stroke:#333,stroke-width:2px;  
+    style C fill:#F4B9AD,stroke:#333,stroke-width:2px;  
+    style D fill:#CADBF9,stroke:#333,stroke-width:2px;  
+
+    %% Apply different colors to arrows
+
+```
+:::
+
+:::: {.column width="60%"}
+::: custom-font-size
+topological features
+:::
+::::
+::::::
+
+
+## Simulation steps
+
+:::::: columns
+::: {.column width="40%"}
+```{mermaid}
+
+flowchart TD
+        A(1. Set reference model) --> B(2. Generate synthetic networks)
+        B --> C(3. Extract topological features)
+        C --> D(4. Simulate symptom dynamics)
+
+    %% Apply different colors to each node
+    style A fill:#CADBF9,stroke:#333,stroke-width:2px;
+    style B fill:#CADBF9,stroke:#333,stroke-width:2px;  
+    style C fill:#CADBF9,stroke:#333,stroke-width:2px;  
+    style D fill:#F4B9AD,stroke:#333,stroke-width:2px;  
+
+    %% Apply different colors to arrows
+
+```
+:::
+
+:::: {.column width="60%"}
+::: custom-font-size
+
+Simulate dynamics 
+
+
+:::
+::::
+::::::
+
+
+## Results
+
+## Currently..
+
+## Thank you
+
+-   Comments / Questions?
+-   Contact: k.park\@uva.nl
+
+::: {#supervisors}
+![Vítor Vasconcelos](img/Vitor.png){.absolute top="10" right="300" width="200" height="214"} [Vítor V. Vasconcelos]{.absolute top="250" right="330"} 
+![Mike Lees](img/mike.png){.absolute top="20" right="50" width="202"} [Mike Lees]{.absolute top="250" right="110"}
+
+<br> <br> <br> <br> <br>
+
+##### References
+
+::: {#refs}
+:::

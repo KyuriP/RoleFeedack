@@ -1,0 +1,127 @@
+/*-- scss:defaults --*/
+
+//body-bg: #b7b09c;
+//$body-color: #4e3629;
+//$link-color: #ffc72c;
+//$presentation-heading-color: #cc0000;
+//$code-color: #cc0000;
+//$code-block-bg: #ded9ca;
+//$code-block-border-color: #000000;
+$highlight-color: #F5651C; /* Define the orange color for reuse */
+
+/*-- scss:rules --*/
+
+/*-- title page --*/
+
+
+/*-- #title-slide.center.present{
+    top: 160px;
+    display: block;
+}
+--*/
+
+
+h1.title{
+  font-size: 1.5em;
+  color: #FAF9F6;
+  margin-top: 10;
+   margin-bottom: 7rem;
+}
+
+#title-slide .subtitle {
+    font-size: 1em;
+    margin-bottom: 4rem;
+    color: #FAF9F6;
+}
+
+p.date{
+  font-size: 0.7em;
+  color: #FAF9F6;
+}
+
+div.quarto-title-authors{
+    margin-top: 10;
+  color: #FAF9F6;
+}
+
+
+/*-- logo --*/
+.reveal .slide-logo{
+  height: 70px !important;
+  width: 180px!important;
+  max-width: unset !important;
+  max-height: unset !important;
+  margin: 1;
+vertical-align: bottom;
+  
+}
+
+
+/*-- body text size --*/
+
+.reveal section p {
+    display: inline-block;
+    font-size: 0.7em;
+    line-height: 1.2em;
+    vertical-align: top;
+}
+
+
+/*-- Table font size and etc --*/
+.reveal table{
+ font-size: 0.5em;
+ margin-bottom: 3em;
+ padding: 30px;
+
+}
+
+
+/*-- model equation --*/
+#equation{
+ margin-top: 13em;
+ /*--font-size: .7em; --*/
+}
+
+
+/* to remove space above mermiad flowchart */
+div {
+    p:empty {
+        display: none; // Hide empty <p> tags
+    }
+}
+
+
+.custom-font-size {
+    font-size: 25px; // Adjust this value to your desired font size
+    line-height: 1.5; // Optional: adjust line height for better readability
+}
+
+
+/* Custom style to set the text to black initially */
+.highlight-orange {
+  color: black; /* Default text color (black) */
+  font-weight: normal; /* Normal weight */
+  transition: color 0.2s ease-in-out; /* Smooth transition for color change */
+}
+
+/* When the fragment is revealed, change the text color to orange */
+.highlight-orange.fragment {
+  color: $highlight-color; /* Text color turns orange when the fragment is revealed */
+}
+
+
+.reveal .slides section .fragment.blur {
+  filter: blur(5px);
+}
+
+.reveal .slides section .fragment.blur.visible {
+  filter: none
+}
+
+
+
+/*-- reference text smaller --*/
+.reveal div.hanging-indent{
+    font-size: 0.6em;
+}
+
