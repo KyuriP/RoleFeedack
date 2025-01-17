@@ -3,7 +3,7 @@
 ##
 ## This script focuses on analyzing the simulated data by examining node and edge
 ## frequencies involved in feedback loops. Based on the results, it generates figures 
-## (e.g., Figure 1, Figure 2, Figure 3) to visualize these patterns.
+## (e.g., Figure 6, Figure 7, Figure 8) to visualize these patterns.
 ## =========================================================
 
 # time points to use

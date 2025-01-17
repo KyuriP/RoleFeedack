@@ -154,10 +154,10 @@ rm(res16384, res32768, res49152, res65536, res81920, res98304, res114688, res131
 new_res2 <- res2 |> filter(!stringr::str_detect(mat, paste0("^((", paste(dup_ind, collapse = "|"), ")-)")))
 
 # get the averages
-avg_res <- res2 |>
+avg_res <- res2 |> 
   rowwise() |>
-  mutate(avg = mean(total...1:total...50)) |>
-  select(avg, mat) |>
+  dplyr::mutate(avg = mean(c_across(starts_with("total...")))) |>
+  dplyr::select(avg, mat) |>
   ungroup() # cancel rowwise()
 
 

@@ -14,7 +14,7 @@ source("code/libraries.R")
 ## source necessary functions
 source("code/euler_stochastic2.R")
 source("code/mod_specification.R")
-source("code/gen_network.R")
+source("code/helper_func.R")
 
 
 
