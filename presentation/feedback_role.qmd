@@ -17,8 +17,7 @@ format:
     preview-links: auto
     html-math-method: mathjax
     logo: img/csl_logo.png
-
-#     auto-stretch: false
+    auto-stretch: false
 # from: markdown+emoji
 title-slide-attributes:
     data-background-image: img/title_bg2.png
@@ -105,7 +104,7 @@ dS_{i} = S_{i}(1-S_{i})\left(\beta_i + \alpha_{ii} S_{i} + \sum_{\substack{j=1\\
 ```{mermaid}
 
 flowchart TD
-        A(1. Set reference model) --> B(2. Generate synthetic networks)
+        A(1. Set a reference network) --> B(2. Generate synthetic networks)
         B --> C(3. Extract topological features)
         C --> D(4. Simulate symptom dynamics)
 
@@ -136,7 +135,7 @@ Our reference model:
 ```{mermaid}
 
 flowchart TD
-        A(1. Set reference model) --> B(2. Generate synthetic networks)
+        A(1. Set a reference network) --> B(2. Generate synthetic networks)
         B --> C(3. Extract topological features)
         C --> D(4. Simulate symptom dynamics)
 
@@ -166,13 +165,13 @@ Our reference model:
 
 <br> <br> <br> <br> <br> <br> <br> <br> <br> <br> <br> <br> <br> <br>
 
-- The total number of possible network configurations is $2^n$, where $n$ is the number of *independent* edges.
+-   The total number of possible network configurations is $2^n$, where $n$ is the number of *independent* edges.
 
-- There are 17 edges --- two are *dependent*: a feedback loop between **sad** and **guilt**).
+-   There are 17 edges --- two are *dependent*: a feedback loop between **sad** and **guilt**).
 
-- The feedback loop itself can have [3 distinct configurations.]{.fragment fragment-index="1" .highlight-orange}
+-   The feedback loop itself can have [3 distinct configurations.]{.fragment .highlight-orange fragment-index="1"}
 
-- The total number of unique network configurations derivable from our example network is [***$2^{15} \times 3 =$ 98,304***.]{.fragment fragment-index="5"}
+-   The total number of unique network configurations derivable from our example network is [$2^{15} \times 3 =$ 98,304.]{.fragment fragment-index="5"}
 ::::
 
 ![](img/algorithm1.png)
@@ -189,15 +188,14 @@ The feedback loop itself can have 3 distinct configurations: (1) both edges in t
 The remaining 15 independent edges can produce $2^{15}$ possible configurations. Combining these with the 3 unique configurations of the feedback loop, the total number of unique network configurations derivable from our example network is $2^{15} \times 3 =$ 98,304.
 :::
 
-
 ## Simulation steps
 
-:::::: columns
+:::::::: columns
 ::: {.column width="40%"}
 ```{mermaid}
 
 flowchart TD
-        A(1. Set reference model) --> B(2. Generate synthetic networks)
+        A(1. Set a reference network) --> B(2. Generate synthetic networks)
         B --> C(3. Extract topological features)
         C --> D(4. Simulate symptom dynamics)
 
@@ -212,13 +210,62 @@ flowchart TD
 ```
 :::
 
-:::: {.column width="60%"}
-::: custom-font-size
-topological features
-:::
-::::
-::::::
+:::::: {.column width="60%"}
+<!-- ::: custom-font-size2 -->
 
+<!-- -   Number of feedback loops -->
+
+<!-- -   Degree of overlap between loops -->
+
+<!-- -   Weighted degree variability -->
+
+<!-- ::: -->
+
+::::: panel-tabset
+#### 1. Number of loops
+
+![](img/loop_example.png){width="70%" fig-align="center"}
+
+<br> <br> <br>
+
+![](img/algo2.png){width="70%" fig-align="center"}
+
+#### 2. Overlap level
+
+::: custom-font-size
+The overlap level is calculted by normalizing the squared frequencies:
+
+$$
+\mathcal{O}_i = \frac{\sum_{v \in V_i} f_{v,i}^2}{n_{c,i}^2} \\\\\\\\\ 
+$$
+
+-   $n_{c,i}$ denote the total number of loops in network $i$.
+
+-   $f_{v,i} = \sum_{c \in C_i} \mathbf{1}_{v \in c}$.
+:::
+
+#### 3. Degree variability
+
+::: custom-font-size
+$$
+\text{weighted degree variability} \ (\sigma_{tot}) = \sigma_{in} + \sigma_{out}
+$$
+
+-   $\sigma_{in} = sd \left( \{d_i^{in} \}_{i \in V} \right)$ and $\sigma_{out} = sd \left( \{d_i^{out}\}_{i \in V} \right)$.
+
+-   $\{d_i^{in}\}_{i \in V}$ and $\{d_i^{out}\}_{i \in V}$ represent the sets of weighted in-degrees and out-degrees, respectively, for all nodes in $V$.
+:::
+:::::
+::::::
+::::::::
+
+::: notes
+Let $C_i$ represent the set of all feedback loops in network $i$, and $n_{c,i}$ denote the total number of loops in network $i$.
+
+$\mathbf{1}_{v \in c}$ is an indicator function that equals 1 if node $v$ is in loop $c$, and 0 otherwise.
+
+This captures the degree of overlap among feedback loops in network $i$.
+:::
 
 ## Simulation steps
 
@@ -227,7 +274,7 @@ topological features
 ```{mermaid}
 
 flowchart TD
-        A(1. Set reference model) --> B(2. Generate synthetic networks)
+        A(1. Set a reference network) --> B(2. Generate synthetic networks)
         B --> C(3. Extract topological features)
         C --> D(4. Simulate symptom dynamics)
 
@@ -243,28 +290,118 @@ flowchart TD
 :::
 
 :::: {.column width="60%"}
-::: custom-font-size
+::: custom-font-size2
+-   Simulate dynamics of 9 symptoms over 2000 time points.
+-   Introduce a shock at $t$ = 50 that lasts for 300 time points.
+-   Run 50 simulations per each of 98,304 network configurations.
+-   Aggregate symptom values recorded at $t$ = 400, 800, 1200, 1600, 2000.
 
-Simulate dynamics 
-
-
+![](img/param_tab.png)
 :::
 ::::
 ::::::
 
-
 ## Results
 
+Number of feedback loops
+
+::: r-stack
+![](img/feedback_density2-0.png){width="80%" fig-align="center"}
+
+![](img/feedback_density2-1.png){.fragment .fade-in fig-align="center" width="80%"}
+
+![](img/feedback_density2-2.png){.fragment .fade-in width="80%" fig-align="center"}
+
+![](img/feedback_density2-3.png){.fragment .fade-in width="80%" fig-align="center"}
+
+![](img/feedback_density2-4.png){.fragment .fade-in width="80%" fig-align="center"}
+
+![](img/feedback_density2-5.png){.fragment .fade-in width="80%" fig-align="center"}
+:::
+
+## Results (cont.)
+
+Weigted degree variability & overlap level
+
+::: r-stack
+![](img/var_overlap0.png){width="60%" fig-align="center"}
+
+![](img/var_overlap1.png){.fragment .fade-in width="60%" fig-align="center"}
+
+:::
+
+
+## Results (cont.)
+
+```{=latex}
+\begin{center}
+\footnotesize
+\begin{longtable}{p{0.05\textwidth} p{0.45\textwidth} p{0.05\textwidth} p{0.45\textwidth}}
+\toprule
+\textbf{ID} & \textbf{Feedback loop trace} & \textbf{ID} & \textbf{Feedback loop trace} \\ \midrule
+\endfirsthead
+
+\multicolumn{4}{c}{{\bfseries \tablename\ \thetable{} -- continued from previous page}} \\
+\midrule
+\textbf{ID} & \textbf{Feedback loop trace} & \textbf{ID} & \textbf{Feedback loop trace} \\ \midrule
+\endhead
+
+\endlastfoot
+\textit{loop1} & \scriptsize{1-4-3-2-1, 1-2-3-4-1} & \textit{loop2} & \scriptsize{1-4-5-3-2-1, 1-2-3-5-4-1}  \\ 
+\textit{loop3} & \scriptsize{1-4-3-5-6-2-1, 1-2-6-5-3-4-1}  & \textit{loop4} & \scriptsize{1-4-7-6-5-3-2-1, 1-2-3-5-6-7-4-1} \\
+\textit{loop5} & \scriptsize{1-4-7-8-6-5-3-2-1, 1-2-3-5-6-8-7-4-1} & \textit{loop6} & \scriptsize{1-4-3-5-6-7-8-9-2-1, 1-4-7-8-9-6-5-3-2-1, 1-2-3-5-6-9-8-7-4-1, 1-2-9-8-7-6-5-3-4-1} \\
+\textit{loop7} & \scriptsize{1-4-3-5-6-8-9-2-1, 1-2-9-8-6-5-3-4-1} & \textit{loop8} & \scriptsize{1-4-3-5-6-9-2-1, 1-2-9-6-5-3-4-1} \\ 
+\textit{loop9} & \scriptsize{1-4-2-1, 1-2-4-1} & \textit{loop10} & \scriptsize{1-4-5-6-2-1, 1-2-6-5-4-1} \\ 
+\textit{loop11} & \scriptsize{1-4-5-6-7-8-9-2-1, 1-2-9-8-7-6-5-4-1}
+ & \textit{loop12} & \scriptsize{1-4-5-6-8-9-2-1, 1-2-9-8-6-5-4-1}
+ \\ 
+\textit{loop13} & \scriptsize{1-4-5-6-9-2-1, 1-2-9-6-5-4-1}
+ & \textit{loop14} & \scriptsize{1-4-7-6-2-1, 1-2-6-7-4-1}
+ \\ 
+\textit{loop15} & \scriptsize{1-4-7-8-6-2-1, 1-2-6-8-7-4-1}
+ & \textit{loop16} & \scriptsize{1-4-7-8-9-6-2-1, 1-4-7-8-6-9-2-1, 1-2-9-8-6-7-4-1, 1-2-6-9-8-7-4-1, 1-4-7-6-8-9-2-1} \\ 
+\textit{loop17} & \scriptsize{1-4-7-6-9-2-1, 1-2-9-6-7-4-1}
+ & \textit{loop18} & \scriptsize{1-4-7-8-9-2-1, 1-2-9-8-7-4-1} \\ 
+\textit{loop19} & \scriptsize{2-4-3-2, 2-3-4-2}
+ & \textit{loop20} & \scriptsize{2-4-5-3-2, 2-3-5-4-2}
+ \\ 
+\textit{loop21} & \scriptsize{2-6-5-3-4-2, 2-4-3-5-6-2, 2-6-5-4-3-2, 2-3-4-5-6-2} & \textit{loop22} & \scriptsize{2-4-7-6-5-3-2, 2-6-7-4-5-3-2, 2-3-5-4-7-6-2, 2-3-5-6-7-4-2} \\ 
+\textit{loop23} & \scriptsize{2-4-7-8-6-5-3-2, 2-3-5-4-7-8-6-2, 2-6-8-7-4-5-3-2, 2-3-5-6-8-7-4-2} & \textit{loop24} & \scriptsize{2-3-5-4-7-8-9-6-2, 2-9-8-7-4-3-5-6-2, 2-9-8-7-6-5-4-3-2, 2-6-9-8-7-4-5-3-2, 2-9-8-6-7-4-5-3-2, 2-4-3-5-6-7-8-9-2, 2-6-5-3-4-7-8-9-2, 2-9-8-7-6-5-3-4-2, 2-3-4-5-6-7-8-9-2, 2-4-7-8-9-6-5-3-2, 2-3-5-4-7-8-6-9-2, 2-3-5-6-9-8-7-4-2, 2-3-5-4-7-6-8-9-2, 2-9-6-8-7-4-5-3-2} \\ 
+\bottomrule
+
+\caption{Feedback loop IDs and their corresponding loop traces as shown in Figure \ref{fig:cycle_plot}. Each number represents the following nodes: 1 = \textit{anh}, 2 = \textit{sad}, 3 = \textit{slp}, 4 = \textit{ene}, 5 = \textit{slp}, 6 = \textit{glt}, 7 = \textit{con}, 8 = \textit{mot}, 9 = \textit{sui}.} 
+\end{longtable}
+\end{center} 
+```
+
 ## Currently..
+
+::: custom-font-size
+-   Connecting with empirical observations
+-   Running causal discovery to check for cycle patterns
+
+
+```{r}
+#| label: fig-plots
+#| layout-ncol: 2
+#| out-width: 70%
+#| fig-cap: "Resulting graphs of precarity sum score and individual depression symptoms using FCI and CCI.13"
+#| fig-subcap:
+#|   - "FCI"
+#|   - "CCI"
+#|   
+knitr::include_graphics("img/FCI_presum.png")
+knitr::include_graphics("img/CCI_presum.png")
+```
+:::
 
 ## Thank you
 
 -   Comments / Questions?
 -   Contact: k.park\@uva.nl
 
-::: {#supervisors}
-![Vítor Vasconcelos](img/Vitor.png){.absolute top="10" right="300" width="200" height="214"} [Vítor V. Vasconcelos]{.absolute top="250" right="330"} 
-![Mike Lees](img/mike.png){.absolute top="20" right="50" width="202"} [Mike Lees]{.absolute top="250" right="110"}
+:::: {#supervisors}
+![Vítor Vasconcelos](img/Vitor.png){.absolute top="10" right="300" width="200" height="214"} [Vítor V. Vasconcelos]{.absolute top="250" right="330"} ![Mike Lees](img/mike.png){.absolute top="20" right="50" width="202"} [Mike Lees]{.absolute top="250" right="110"}
 
 <br> <br> <br> <br> <br>
 
@@ -272,3 +409,4 @@ Simulate dynamics
 
 ::: {#refs}
 :::
+::::
