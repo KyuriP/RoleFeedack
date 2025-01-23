@@ -140,11 +140,12 @@ res@amat |> plotAG()
 lea <- read.csv2("data/data_lea.csv")[,1:12]
   
 
+
 # Data preparation
 edge_data <- data.frame(
-  Edge = c("ene->sad", "glt->sad", "anh->sad", "anh->ene", "con->ene",
-           "sad->anh", "sad->ene", "sad->glt", "slp->sad", "con->glt"),
-  Percentage = c(21, 16, 16, 15, 15, 14, 13, 13, 12, 12) / 203 * 100 #total network
+  Edge = c("anh -> ene", "sad -> con", "glt -> ene", "ene -> sad", "sad -> anh",
+           "anh -> sad", "glt -> sad", "con -> ene", "sad -> ene", "slp -> sad"),
+  Percentage = c(32, 32, 31, 31, 27, 26, 26, 25, 23, 22) / 203 * 100 #total network
 )
 
 # Modify edges to create expressions for mathematical notation
@@ -176,12 +177,12 @@ edgefreq <- ggplot(edge_data, aes(x = Edge, y = Percentage)) +
 
 ## plot the networks
 dat_A <- matrix(c(.30, 0.1, 0, 0.1, 0, 0, 0, 0, 0,
-                   0.1, .30, 0, 0.1, 0, 0.1, 0, 0, 0,
+                   0.1, .30, 0, 0.1, 0, 0, 0.1, 0, 0,
                    0,  0.1, .30, 0, 0, 0, 0, 0, 0,
                    0, 0.1, 0, .30, 0, 0, 0, 0, 0,
                    0, 0, 0, 0, .30, 0, 0, 0, 0,
-                   0, 0.1, 0, 0, 0, .30, 0, 0, 0,
-                   0, 0, 0, 0.1, 0, 0.1, .30, 0, 0,
+                   0, 0.1, 0, 0.1, 0, .30, 0, 0, 0,
+                   0, 0, 0, 0.1, 0, 0, .30, 0, 0,
                    0, 0, 0, 0, 0, 0, 0, .30, 0,
                    0, 0, 0, 0, 0, 0, 0, 0, .30), 9, 9, byrow = T)
 
@@ -192,7 +193,7 @@ manual_layout <- matrix(c( -1.00000000,-0.3697451,
                            -0.86442347, 0.4941126,
                            -0.08080896, 0.3245454,
                            0.49177041, 0.9000000,
-                           0.43942364,-0.1656119,
+                           0.55942364,-0.1656119,
                            0.99799343, 0.2837986,
                            1.00000000,-0.7135021,
                            0.41570786,-1.0000000), 9, 2, byrow=T)
@@ -201,6 +202,6 @@ manual_layout <- matrix(c( -1.00000000,-0.3697451,
 png(file = "figure/datanet.png", width=2000, height=2000, bg = 'transparent', family="Palatino")
 
 qgraph(dat_A, layout = manual_layout, edge.color = "steelblue4", label.color = "black", asize= 5, fade =F, vsize=10, esize = 3)
-title(main="Top 10 Edge Network", cex.main=8, family = "Palatino", line=-1)
+title(main="Top 10 Edge Network", cex.main=8, family = "Palatino", line=-0.5)
 
 dev.off()
