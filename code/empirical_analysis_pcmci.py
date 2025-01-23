@@ -1,63 +1,39 @@
 import numpy as np
-import matplotlib
-from matplotlib import pyplot as plt
-import sklearn
 import pandas as pd
-
-import seaborn as sns
+import matplotlib.pyplot as plt
+import warnings
+from collections import Counter
 from sklearn.impute import KNNImputer
-
-
-import tigramite
 from tigramite import data_processing as pp
-from tigramite.toymodels import structural_causal_processes as toys
-
+from tigramite.pcmci import PCMCI
+from tigramite.independence_tests.gsquared import Gsquared
 from tigramite import plotting as tp
 from tigramite.plotting import plot_graph
-from tigramite.pcmci import PCMCI
-from tigramite.lpcmci import LPCMCI
 
-from tigramite.independence_tests.parcorr import ParCorr
-from tigramite.independence_tests.robust_parcorr import RobustParCorr
-from tigramite.independence_tests.parcorr_wls import ParCorrWLS 
-from tigramite.independence_tests.gpdc import GPDC
-from tigramite.independence_tests.cmiknn import CMIknn
-from tigramite.independence_tests.cmisymb import CMIsymb
-from tigramite.independence_tests.gsquared import Gsquared
-from tigramite.independence_tests.regressionCI import RegressionCI
+import warnings
 
+# Suppress specific warnings from Tigramite
+warnings.filterwarnings(
+    "ignore", 
+    message="In analysis mode 'single', 'data'.shape =*", 
+    module="tigramite.data_processing"
+)
 
+# Load the dataset
+data = pd.read_csv("data_lea.csv", sep=";")
 
-
-
-# Load the CSV file into a DataFrame
-data = pd.read_csv("data_lea.csv", sep =";")
-
-# Replace 'NA' or string 'NaN' with np.nan for consistent handling
-data.replace("NA", np.nan, inplace=True)
-
-# Convert all columns to numeric where possible
-data = data.apply(pd.to_numeric, errors="coerce")
-
-# Check missing values before imputation
+# Preprocess the data
+data.replace("NA", np.nan, inplace=True)  # Replace 'NA' or 'NaN' with np.nan
+data = data.apply(pd.to_numeric, errors="coerce")  # Convert to numeric
 print("Missing values per column before imputation:")
 print(data.isnull().sum())
 
-# Apply KNN imputation
-imputer = KNNImputer(n_neighbors=5)  # Use 5 neighbors
+# Impute missing values using KNN
+imputer = KNNImputer(n_neighbors=5)
 data_imputed = pd.DataFrame(imputer.fit_transform(data), columns=data.columns)
-
-# Ensure binary data by rounding the imputed values
-data_imp = data_imputed.round()
-
-# Check missing values after imputation
+data_imputed = data_imputed.round()  # Ensure binary values
 print("Missing values per column after imputation:")
-print(data_imp.isnull().sum())
-
-# Verify all values are binary (0 or 1)
-print("Unique values in the data after rounding:")
-print(data_imp.apply(pd.Series.unique))
-
+print(data_imputed.isnull().sum())
 
 
 # Rename columns for symptoms
@@ -70,92 +46,117 @@ rename_mapping = {
     "sleep": "slp",
     "pleasure": "anh",
     "psychomotor": "mot",
-    "appetite": "app"
+    "appetite": "app",
 }
-data_imp.rename(columns=rename_mapping, inplace=True)
-
-# Updated symptom columns
-symptom_columns = [
-    "sad", "con", "glt", "sui", "ene", "slp", "anh", "mot", "app"
-]
+data_imputed.rename(columns=rename_mapping, inplace=True)
 
 
-# Extract symptom data
-symptom_data = data_imp[symptom_columns].values
 
-# Extract the time index
-time_index = data_imp["sessionN"].values
+# Define symptom columns
+symptom_columns = ["sad", "con", "glt", "sui", "ene", "slp", "anh", "mot", "app"]
 
-# Specify variable names
-var_names = symptom_columns
+# Create a Tigramite DataFrame
+symptom_data = data_imputed[symptom_columns].values
+time_index = data_imputed["sessionN"].values
+dataframe = pp.DataFrame(data=symptom_data, datatime={0: time_index}, var_names=symptom_columns)
 
-# Create Tigramite DataFrame
-dataframe = pp.DataFrame(
-    symptom_data,
-    datatime={0: time_index},
-    var_names=var_names
-)
-
-print(dataframe)
-
-## each patient version
-# Split the dataset by patient
-patients = data_imp["PatID.x"].unique()
-
-
-# Dictionary to store results for each patient
+# Split data by patient
+patients = data_imputed["PatID.x"].unique()
 patient_results = {}
 
-# Loop through each patient
-for patient in patients:
-    print(f"Running PCMCI for Patient {patient}")
-    
-    # Filter data for the current patient
-    patient_data = data_imp[data_imp["PatID.x"] == patient]
-    
-    # Ensure the patient has enough data points
-    if patient_data.shape[0] < 6:  # Assuming tau_max=3 requires at least 4 rows
-        print(f"Skipping Patient {patient} due to insufficient time points.")
+# Minimum observations required
+MIN_OBSERVATIONS = 4
+
+# Filter patients
+filtered_patients = [
+    patient for patient in patients
+    if data_imputed[data_imputed["PatID.x"] == patient].shape[0] >= MIN_OBSERVATIONS
+]
+
+print(f"Number of patients with sufficient data: {len(filtered_patients)}")
+
+# Process each patient
+for patient in filtered_patients:
+    patient_data = data_imputed[data_imputed["PatID.x"] == patient]
+    data_shape = patient_data[symptom_columns].shape
+
+    # Check data validity
+    if data_shape[0] < MIN_OBSERVATIONS:
+        print(f"Skipping Patient {patient}: Insufficient data points ({data_shape[0]} rows).")
         continue
-    
-    # Prepare symptom data and time index
-    patient_symptoms = patient_data[symptom_columns].values
-    time_index = patient_data["sessionN"].values
-    
-    # Check if the patient_symptoms array is valid
-    if patient_symptoms.size == 0:
-        print(f"Skipping Patient {patient} due to empty data.")
-        continue
-    
-    # Create Tigramite DataFrame for the patient
-    tigramite_dataframe = pp.DataFrame(
-        patient_symptoms,
-        datatime={0: time_index},
-        var_names=symptom_columns
-    )
-    
-    # Initialize PCMCI with Gsquared
-    gsquared = Gsquared()
-    pcmci = PCMCI(dataframe=tigramite_dataframe, cond_ind_test=gsquared)
-    
-    # Run PCMCI
+
     try:
-        results = pcmci.run_pcmci(tau_max=3, pc_alpha=0.1)
-        
-        # Store the results
-        patient_results[patient] = results
-        
-        # Print significant links for this patient
-        print(f"Results for Patient {patient}:")
-        pcmci.print_significant_links(
-            p_matrix=results['p_matrix'],
-            val_matrix=results['val_matrix'],
-            alpha_level=0.05
+        symptom_data = patient_data[symptom_columns].values
+        time_index = patient_data["sessionN"].values
+
+        # Create Tigramite DataFrame
+        tigramite_dataframe = pp.DataFrame(
+            data=symptom_data,
+            datatime={0: time_index},
+            var_names=symptom_columns
         )
 
-    except ValueError as e:
+        # Run PCMCI
+        pcmci = PCMCI(dataframe=tigramite_dataframe, cond_ind_test=Gsquared())
+        results = pcmci.run_pcmci(tau_max=3, pc_alpha=0.1)
+        patient_results[patient] = results
+
+    except Exception as e:
         print(f"Error for Patient {patient}: {e}")
-        continue
+
+
+
+# Collect edges across all patients
+all_edges = []
+non_empty_networks = 0
+
+for patient, results in patient_results.items():
+    val_matrix = results['val_matrix']
+    p_matrix = results['p_matrix']
+    alpha_level = 0.05
+
+    significant_edges_exist = False
+    for i, target_var in enumerate(symptom_columns):
+        for j, source_var in enumerate(symptom_columns):
+            if i == j:
+                continue  # Skip self-loops
+            if any(p_matrix[j, i, lag] < alpha_level for lag in range(1, 4)):  # Ignore lag differences
+                significant_edges_exist = True
+                edge = f"{source_var} -> {target_var}"
+                all_edges.append(edge)
+                
+    # Count this patient as having a non-empty network if any significant edge exists
+    if significant_edges_exist:
+        non_empty_networks += 1
+
+# Count edge frequencies
+edge_counts = Counter(all_edges)
+
+# Calculate percentages based on non-empty networks
+edge_percentages = {edge: (count / non_empty_networks) * 100 for edge, count in edge_counts.items()}
+
+# Get the top 30 most common edges
+most_common_edges = Counter(edge_percentages).most_common(30)
+
+# Print the total number of non-empty networks
+print(f"Total Non-Empty Networks: {non_empty_networks}\n")
+
+# Print frequencies and percentages for top 30 edges
+print("Top 30 Edge Frequencies and Percentages:")
+for edge, percentage in most_common_edges:
+    print(f"{edge}: {edge_counts[edge]} occurrences, {percentage:.2f}%")
+
+
+# Plot results
+edges, percentages = zip(*most_common_edges)
+plt.figure(figsize=(10, 6))
+plt.barh(edges, percentages, color='skyblue')
+plt.xlabel("Percentage (%)")
+plt.ylabel("Edges")
+plt.title(f"Top 30 Edge Frequencies (Among {non_empty_networks} Non-Empty Networks)")
+plt.gca().invert_yaxis()
+plt.show()
+
 
 # Plot the graphs for the specified patients
 # for patient in patients_to_plot:
@@ -181,126 +182,6 @@ for patient in patients:
 #     else:
 #         print(f"No results available for Patient {patient}. Skipping graph.")
     
-
-
-
-from collections import Counter
-
-# Dictionary to store all significant edges across patients
-all_edges = []
-
-# Loop through results for each patient
-for patient, results in patient_results.items():
-    val_matrix = results['val_matrix']
-    p_matrix = results['p_matrix']
-    alpha_level = 0.05  # Significance threshold
-    
-    # Extract significant edges
-    significant_edges = []
-    for i, target_var in enumerate(symptom_columns):
-        for j, source_var in enumerate(symptom_columns):
-            for lag in range(1, 4):  # tau_max = 3
-                if p_matrix[j, i, lag] < alpha_level:
-                    edge = (f"{source_var} (lag {lag}) -> {target_var}")
-                    significant_edges.append(edge)
-    
-    # Store edges for this patient
-    all_edges.extend(significant_edges)
-
-# Count the frequency of each edge
-edge_counts = Counter(all_edges)
-
-# Print the most common edges
-print("\nMost Common Edges Across Patients:")
-for edge, count in edge_counts.most_common(30):
-    print(f"{edge}: {count} occurrences")
-
-
-
-
-# Dictionary to store all significant edges across non-empty networks
-all_edges = []
-non_empty_networks = 0  # Counter for non-empty networks
-
-# Loop through results for each patient
-for patient, results in patient_results.items():
-    val_matrix = results['val_matrix']
-    p_matrix = results['p_matrix']
-    alpha_level = 0.05  # Significance threshold
-
-    # Check if there are any significant edges (excluding self-loops)
-    significant_edges_exist = False
-    for i, target_var in enumerate(symptom_columns):
-        for j, source_var in enumerate(symptom_columns):
-            if i == j:
-                continue  # Skip self-loops
-            for lag in range(1, 4):  # tau_max = 3
-                if p_matrix[j, i, lag] < alpha_level:
-                    significant_edges_exist = True
-                    edge = (f"{source_var} (lag {lag}) -> {target_var}")
-                    all_edges.append(edge)
-
-    # If significant edges exist, count this graph as non-empty
-    if significant_edges_exist:
-        non_empty_networks += 1
-
-# Count the frequency of each edge
-edge_counts = Counter(all_edges)
-# Number of non empty networks
-print("Num. of non-empty network:", non_empty_networks)
-
-# Calculate percentages based on non-empty networks
-edge_percentages = {edge: (count / non_empty_networks) * 100 for edge, count in edge_counts.items()}
-
-# Get the top 10 most frequent edges
-most_common_edges = Counter(edge_percentages).most_common(30)
-
-# Extract edges and percentages
-edges, percentages = zip(*most_common_edges)
-
-# Plot the results
-plt.figure(figsize=(10, 6))
-plt.barh(edges, percentages, color='skyblue')
-plt.xlabel("Percentage (%)")
-plt.ylabel("Edges")
-plt.title(f"Top 30 Edge Frequencies (Among {non_empty_networks} Non-Empty Networks Based on Significant Edges)")
-plt.gca().invert_yaxis()
-plt.show()
-
-# Print the percentages for top edges
-print("\nTop 30 Edge Frequencies as Percentages (Based on Significant Edges):")
-for edge, percentage in most_common_edges:
-    print(f"{edge}: {percentage:.2f}%")
-
-
-# # Identify cycles
-# print("\nPotential Cycles Detected:")
-# cycles = []
-# for edge in edge_counts.keys():
-#     source, target = edge.split("->")
-#     if target.strip() in source:  # Simple heuristic for a cycle
-#         cycles.append(edge)
-# for cycle in cycles:
-#     print(cycle)
-
-
-# Get the top 10 most common edges
-most_common_edges = edge_counts.most_common(30)
-edges, counts = zip(*most_common_edges)
-
-# Plot the results
-plt.figure(figsize=(10, 6))
-plt.barh(edges, counts, color='skyblue')
-plt.xlabel("Frequency")
-plt.ylabel("Edges")
-plt.title("Most Common Edges Across Patients")
-plt.gca().invert_yaxis()
-plt.show()
-
-
-
-
-
 
 
 # Predefine node positions for uniform layouts

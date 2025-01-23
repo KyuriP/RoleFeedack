@@ -136,6 +136,10 @@ res@amat |> plotAG()
 ## PCMCI result figure
 ## ===========================
 
+# load schumacher et al. data
+lea <- read.csv2("data/data_lea.csv")[,1:12]
+  
+
 # Data preparation
 edge_data <- data.frame(
   Edge = c("ene->sad", "glt->sad", "anh->sad", "anh->ene", "con->ene",
