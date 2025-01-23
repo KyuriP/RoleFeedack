@@ -38,6 +38,12 @@ bibliography: reference.bib
 :::
 :::::
 
+::: notes
+First, let's talk about the motivation. Why did I start looking into feedback loops? Well, I came across a quote from Mark Manson, the author of The Subtle Art of Not Giving a Fck\*. He describes a concept that's quite relevant to our discussion. This quote captures the essence of feedback loops. 'The more you focus on your problems, the worse they get.'
+
+It's essentially a reinforcing loop, where the more you focus on negative things, the more they amplify. This is something people often refer to as a 'vicious cycle.' And understanding how these loops work is key to addressing complex issues like mental health, which is the main topic of my research.
+:::
+
 ## Motivation (cont.)
 
 :::::: columns
@@ -71,7 +77,9 @@ Mental disorder is produced by direct causal interactions between symptoms that 
 ::::::
 
 ::: notes
-The feedback loop, or what’s often called the "vicious cycle" in mental health, is something that’s been recognized for a long time, especially by empirical researchers and psychiatrists. Patients often talk about how they get stuck in these cycles, and how it is so challenging to brek free from for example a depressed state. The problem, though, is that we still don’t fully understand what’s happening beneath the surface. Where exactly do these feedback loops exist and how do they drive this system? That’s really the core question that we were hoping to learn from this study.
+The concept of the feedback loop, or 'vicious cycle,' has been recognized for quite some time now, particularly by empirical researchers and psychiatrists. Many patients describe feeling trapped in these cycles, which makes it incredibly difficult to break free from conditions like depression. This feedback loop is also a core element of the network theory of psychopathology, as proposed by Denny. According to this theory, symptoms are interconnected and influence each other, often forming these very cycles.
+
+The challenge, however, is that we still don’t fully understand what’s happening beneath the surface. Where exactly do these feedback loops emerge, and how do they influence the overall system? That is the core question of my study — understanding the mechanisms driving these loops is what we aim to learn.
 :::
 
 ## Toy model
@@ -79,7 +87,7 @@ The feedback loop, or what’s often called the "vicious cycle" in mental health
 Adjacency matrix (for the weighted directed graph) determined based on insights from some empirical studies [@ramos-vera_network_2021; @lee_measurement_2023; @jing_comparing_2023].
 
 ::: r-stack
-![](img/netA.png){.absolute .fragment .semi-fade-out left="0" top="225" width="450" fragment-index="1"} ![](img/toymodel.png){.absolute .fragment .fade-in right="0" top="225" width="600" fragment-index="1"}
+![](img/netA.png){.absolute .fragment .semi-fade-out left="0" top="225" width="450" fragment-index="1"} ![](img/toymodel.png){.absolute .fragment .fade-in right="0" top="225" width="500" fragment-index="1"}
 :::
 
 ::: {#equation}
@@ -88,14 +96,41 @@ dS_{i} = S_{i}(1-S_{i})\left(\beta_i + \alpha_{ii} S_{i} + \sum_{\substack{j=1\\
 \end{equation}
 :::
 
-**Description of parameters**
+::: r-stack
+![](img/beta/bifurcation_beta1.png){.absolute top="1140" left="180.1" width="661"} ![](img/beta/bifurcation_beta2.png){.absolute .fragment .fade-in top="1110" left="163" width="678"} ![](img/beta/bifurcation_beta3.png){.absolute .fragment .fade-in top="1059" left="162" width="677"} ![](img/beta/bifurcation_beta4.png){.absolute .fragment .fade-in top="1049" left="162" width="678"} ![](img/beta/bifurcation_beta5.png){.absolute .fragment .fade-in top="1050" left="163" width="677"} ![](img/beta/bifurcation_beta6.png){.absolute .fragment .fade-in top="1049" left="163" width="676"}
+:::
 
-| Parameter | Description |
-|--------------------------|:---------------------------------------------|
-| $\beta_i$ | The sensitivity level of $S_i$ to external triggering factors. |
-| $\alpha$ | The elements of the weight matrix $\mathbf{A}$. <BR> $\alpha_{ij}$ refers to the weight of the edge $S_i \rightarrow S_j$ and $\alpha_{ii}$ refers to the weight of the self-reinforcing loop of $S_i$. |
-| $\delta_i$ | The boosting factor that amplifies the effect of other $S_j$'s on $S_i$. |
-| $\sigma_i$ | The scaling factor that controls the strength of the stochastic term. |
+<br> <br> <br> <br> <br> <br> <br> <br> <br> <br> <br> <br> <br> <br> <br> <br> <br> <br> <br>
+
+![](img/bifurcation_w.png){width="90%"}
+
+<!-- **Description of parameters** -->
+
+<!-- | Parameter | Description | -->
+
+<!-- |--------------------------|:---------------------------------------------| -->
+
+<!-- | $\beta_i$ | The sensitivity level of $S_i$ to external triggering factors. | -->
+
+<!-- | $\alpha$ | The elements of the weight matrix $\mathbf{A}$. <BR> $\alpha_{ij}$ refers to the weight of the edge $S_i \rightarrow S_j$ and $\alpha_{ii}$ refers to the weight of the self-reinforcing loop of $S_i$. | -->
+
+<!-- | $\delta_i$ | The boosting factor that amplifies the effect of other $S_j$'s on $S_i$. | -->
+
+<!-- | $\sigma_i$ | The scaling factor that controls the strength of the stochastic term. | -->
+
+::: notes
+So in this study we use a toy model, which is actually the one I introduced last time. Based on some empirical studies, we got this adjacency matrix, which looks like this in a network form. So here, I colored the nodes that are part of cycles in orange; there is one dyadic loop between these two symptoms. And all these causal links are positive as you can see in the matrix, meaning that feedback loop is reinforcing.
+
+And the interaction between the the symptom, we formalize in such a way. Also it is the same model as last time, but for some people who unfortunately missed my last presentation, let me quickly go over it again.
+
+So the $S_i$ here corresponds to a symptom i. The first two terms $S_i(1-S_i)$ are typical logistic differential equation, which we put to constrain the symptom level between 0 and 1. We imposed this constraint to align with the common practice of measuring symptoms on bounded scales in questionnaires. In this context, approaching 0 means a low symptom level, indicating symptom deactivation, and approaching 1 indicates symptom activation.
+
+The third term is a sum of three different elements that collectively determine the symptom level. Here, $\beta_i$ represents the sensitivity level of $S_i$. A lower $\beta_i$ indicates reduced sensitivity to external triggering factors, making the symptom less prone to activation. $\alpha$ denotes the weight of edges in the network, basically the elements of matrix $\mathbf{A}$. $\alpha_{ii}$ is the diagonal of the matrix A, the self-reinforcing loop. And $\alpha_{ji}$ represents the impact of $S_j$ on $S_i$, and $\delta_i$ acts as a booster, making the influence of other symptoms on $S_i$ stronger, depending on the current level of $S_i$. So in the end what it says is that, as the $S_i$ level increases, the effects of other symptoms are amplified by $\delta_i \cdot S_i^2$.
+
+And this term is important because this actually adds the nonlinearity into our model because this is the interaction term between $S_i$ and $S_j$, which can be turned on and off by this delta.
+
+And lastly, we control the noise strength with $\sigma_i$. And the underlying nature of the noise in our model is Gaussian white noise, which is a common choice for capturing random fluctuations.
+:::
 
 ## Simulation steps
 
@@ -121,12 +156,46 @@ flowchart TD
 
 :::: {.column width="60%"}
 ::: custom-font-size
-Our reference model:
+[Our reference model:]{.fragment fragment-index="1"}
 
-![](img/toymodel/toymodel-0.png){.fragment .fade-in .absolute width="400" top="50" right="60"}
+![](img/toymodel/toymodel-0.png){.fragment .fade-in .absolute width="400" top="50" right="60" fragment-index="1"}
 :::
 ::::
 ::::::
+
+::: notes
+Here's a more casual and smooth version of your script that keeps the flow engaging:
+
+------------------------------------------------------------------------
+
+So, what’s the plan? Well, we're going to run a simulation, of course! The process can be broken down into four main steps.
+
+First up, we need to specify a reference network. In our case, that’s the toy model I showed you earlier. Just to jog your memory, here it is again.
+
+Next, the second step is to create all the possible networks based on this skeleton by flipping all the edge directions. Now, our reference network has 17 edges in total. But here's the kicker: two of those edges form a cycle. These two edges can create 3 different configurations just by flipping their directions: both edges pointing into **glt**, both pointing into **sad**, or one pointing to each.
+
+That means, with this network skeleton, we can create 2\^15 possible configurations, plus the 3 unique cases from the cycle-forming edges. In total, this gives us about 98,000 unique network structures to work with!
+
+Now that we’ve got all these network configurations, what’s next? We move on to analyzing their topological features, and of course, we’re mostly focusing on the feedback loops. We measure 3 main features:
+
+First, the basics—**the number of feedback loops** in the network. To identify these loops, we essentially do a brute-force search using something called a **Depth-First Search (DFS)** algorithm. During this traversal, if a node shows up again in the path we’re exploring, it means we’ve hit a cycle, so we record it as a feedback loop. All the unique loops we find get stored in the loop set to make sure we don’t count any duplicates.
+
+Next, we look at **the overlap level** between these cycles. This is about understanding how much the loops are interacting with each other. We analyze the frequency of nodes within these loops, where each node’s frequency tells us how often it shows up in any feedback loop.
+
+We define the frequency for each node (v) in network (i) as: $$
+f_{v,i} = \sum_{c \in C_i} \mathbf{1}_{v \in c},
+$$ Where (\mathbf{1}\_{v \in c}) is an indicator function, meaning it’s 1 if node (v) is part of loop (c), and 0 otherwise.
+
+Now, to capture overlap, we square the frequencies, and normalize by the total number of loops. Squaring the frequencies gives more weight to nodes that appear in multiple loops—because if a node is part of a lot of loops, it has a bigger influence. If we didn’t square the frequencies, it would treat every occurrence of a node in a loop the same, which wouldn’t highlight those important nodes that show up in multiple places.
+
+This overlap measure helps us see how tightly connected the feedback loops are—more overlap means the loops are more interdependent. This lets us see whether loops are independent or linked, which helps us understand how they influence each other in the system.
+
+Finally, we measure **weighted degree variability**, which looks at the spread of connection strength across the network. This is done by summing the standard deviations of both incoming and outgoing weighted degrees.
+
+This measure helps us see how evenly distributed the network’s activation is. If the variability is low, it means activation is spreading pretty evenly across the network. On the other hand, if the variability is high, it suggests that certain nodes are dominating the connectivity, which could tell us a lot about the overall structure of the network.
+
+So in a nutshell, these topological features—feedback loop count, overlap level, and degree variability—help us understand the structure of these networks and how the feedback loops play out in the system.
+:::
 
 ## Simulation steps
 
@@ -228,7 +297,7 @@ flowchart TD
 
 <br> <br> <br>
 
-![](img/algo2.png){width="70%" fig-align="center"}
+![](img/algo2.png){width="90%" fig-align="center"}
 
 #### 2. Overlap level
 
@@ -297,6 +366,12 @@ flowchart TD
 -   Aggregate symptom values recorded at $t$ = 400, 800, 1200, 1600, 2000.
 
 ![](img/param_tab.png)
+
+<br> <br>
+
+- Example trajectory 
+![](img/eachsym.png) 
+![](img/totalsym_arrow.png){.fragment width="110%"}
 :::
 ::::
 ::::::
@@ -321,58 +396,64 @@ Number of feedback loops
 
 ## Results (cont.)
 
-Weigted degree variability & overlap level
+Weighted degree variability & overlap level
 
 ::: r-stack
 ![](img/var_overlap0.png){width="60%" fig-align="center"}
 
 ![](img/var_overlap1.png){.fragment .fade-in width="60%" fig-align="center"}
-
 :::
-
 
 ## Results (cont.)
 
-```{=latex}
-\begin{center}
-\footnotesize
-\begin{longtable}{p{0.05\textwidth} p{0.45\textwidth} p{0.05\textwidth} p{0.45\textwidth}}
-\toprule
-\textbf{ID} & \textbf{Feedback loop trace} & \textbf{ID} & \textbf{Feedback loop trace} \\ \midrule
-\endfirsthead
+:::: panel-tabset
+#### Poportion of edge frequency
 
-\multicolumn{4}{c}{{\bfseries \tablename\ \thetable{} -- continued from previous page}} \\
-\midrule
-\textbf{ID} & \textbf{Feedback loop trace} & \textbf{ID} & \textbf{Feedback loop trace} \\ \midrule
-\endhead
+![](img/edge_proportion.png){fig-align="center" width="70%"}
 
-\endlastfoot
-\textit{loop1} & \scriptsize{1-4-3-2-1, 1-2-3-4-1} & \textit{loop2} & \scriptsize{1-4-5-3-2-1, 1-2-3-5-4-1}  \\ 
-\textit{loop3} & \scriptsize{1-4-3-5-6-2-1, 1-2-6-5-3-4-1}  & \textit{loop4} & \scriptsize{1-4-7-6-5-3-2-1, 1-2-3-5-6-7-4-1} \\
-\textit{loop5} & \scriptsize{1-4-7-8-6-5-3-2-1, 1-2-3-5-6-8-7-4-1} & \textit{loop6} & \scriptsize{1-4-3-5-6-7-8-9-2-1, 1-4-7-8-9-6-5-3-2-1, 1-2-3-5-6-9-8-7-4-1, 1-2-9-8-7-6-5-3-4-1} \\
-\textit{loop7} & \scriptsize{1-4-3-5-6-8-9-2-1, 1-2-9-8-6-5-3-4-1} & \textit{loop8} & \scriptsize{1-4-3-5-6-9-2-1, 1-2-9-6-5-3-4-1} \\ 
-\textit{loop9} & \scriptsize{1-4-2-1, 1-2-4-1} & \textit{loop10} & \scriptsize{1-4-5-6-2-1, 1-2-6-5-4-1} \\ 
-\textit{loop11} & \scriptsize{1-4-5-6-7-8-9-2-1, 1-2-9-8-7-6-5-4-1}
- & \textit{loop12} & \scriptsize{1-4-5-6-8-9-2-1, 1-2-9-8-6-5-4-1}
- \\ 
-\textit{loop13} & \scriptsize{1-4-5-6-9-2-1, 1-2-9-6-5-4-1}
- & \textit{loop14} & \scriptsize{1-4-7-6-2-1, 1-2-6-7-4-1}
- \\ 
-\textit{loop15} & \scriptsize{1-4-7-8-6-2-1, 1-2-6-8-7-4-1}
- & \textit{loop16} & \scriptsize{1-4-7-8-9-6-2-1, 1-4-7-8-6-9-2-1, 1-2-9-8-6-7-4-1, 1-2-6-9-8-7-4-1, 1-4-7-6-8-9-2-1} \\ 
-\textit{loop17} & \scriptsize{1-4-7-6-9-2-1, 1-2-9-6-7-4-1}
- & \textit{loop18} & \scriptsize{1-4-7-8-9-2-1, 1-2-9-8-7-4-1} \\ 
-\textit{loop19} & \scriptsize{2-4-3-2, 2-3-4-2}
- & \textit{loop20} & \scriptsize{2-4-5-3-2, 2-3-5-4-2}
- \\ 
-\textit{loop21} & \scriptsize{2-6-5-3-4-2, 2-4-3-5-6-2, 2-6-5-4-3-2, 2-3-4-5-6-2} & \textit{loop22} & \scriptsize{2-4-7-6-5-3-2, 2-6-7-4-5-3-2, 2-3-5-4-7-6-2, 2-3-5-6-7-4-2} \\ 
-\textit{loop23} & \scriptsize{2-4-7-8-6-5-3-2, 2-3-5-4-7-8-6-2, 2-6-8-7-4-5-3-2, 2-3-5-6-8-7-4-2} & \textit{loop24} & \scriptsize{2-3-5-4-7-8-9-6-2, 2-9-8-7-4-3-5-6-2, 2-9-8-7-6-5-4-3-2, 2-6-9-8-7-4-5-3-2, 2-9-8-6-7-4-5-3-2, 2-4-3-5-6-7-8-9-2, 2-6-5-3-4-7-8-9-2, 2-9-8-7-6-5-3-4-2, 2-3-4-5-6-7-8-9-2, 2-4-7-8-9-6-5-3-2, 2-3-5-4-7-8-6-9-2, 2-3-5-6-9-8-7-4-2, 2-3-5-4-7-6-8-9-2, 2-9-6-8-7-4-5-3-2} \\ 
-\bottomrule
+![](img/edge_networks.png){fig-align="right" width="70%"}
 
-\caption{Feedback loop IDs and their corresponding loop traces as shown in Figure \ref{fig:cycle_plot}. Each number represents the following nodes: 1 = \textit{anh}, 2 = \textit{sad}, 3 = \textit{slp}, 4 = \textit{ene}, 5 = \textit{slp}, 6 = \textit{glt}, 7 = \textit{con}, 8 = \textit{mot}, 9 = \textit{sui}.} 
-\end{longtable}
-\end{center} 
-```
+#### Poportion of loop frequency
+
+![](img/cycle_proportion.png){fig-align="center" width="90%"}
+
+::: custom-font-size3
+| **ID** | **Feedback Loop Trace** | **ID** | **Feedback Loop Trace** |
+|---------------|----------------------|---------------|----------------------|
+| *loop1* | 1-4-3-2-1, 1-2-3-4-1 | *loop2* | 1-4-5-3-2-1, 1-2-3-5-4-1 |
+| *loop3* | 1-4-3-5-6-2-1, 1-2-6-5-3-4-1 | *loop4* | 1-4-7-6-5-3-2-1, 1-2-3-5-6-7-4-1 |
+| *loop5* | 1-4-7-8-6-5-3-2-1, 1-2-3-5-6-8-7-4-1 | *loop6* | 1-4-3-5-6-7-8-9-2-1, 1-4-7-8-9-6-5-3-2-1, 1-2-3-5-6-9-8-7-4-1, 1-2-9-8-7-6-5-3-4-1 |
+| *loop7* | 1-4-3-5-6-8-9-2-1, 1-2-9-8-6-5-3-4-1 | *loop8* | 1-4-3-5-6-9-2-1, 1-2-9-6-5-3-4-1 |
+| *loop9* | 1-4-2-1, 1-2-4-1 | *loop10* | 1-4-5-6-2-1, 1-2-6-5-4-1 |
+| *loop11* | 1-4-5-6-7-8-9-2-1, 1-2-9-8-7-6-5-4-1 | *loop12* | 1-4-5-6-8-9-2-1, 1-2-9-8-6-5-4-1 |
+| *loop13* | 1-4-5-6-9-2-1, 1-2-9-6-5-4-1 | *loop14* | 1-4-7-6-2-1, 1-2-6-7-4-1 |
+| *loop15* | 1-4-7-8-6-2-1, 1-2-6-8-7-4-1 | *loop16* | 1-4-7-8-9-6-2-1, 1-4-7-8-6-9-2-1, 1-2-9-8-6-7-4-1, 1-2-6-9-8-7-4-1, 1-4-7-6-8-9-2-1 |
+| *loop17* | 1-4-7-6-9-2-1, 1-2-9-6-7-4-1 | *loop18* | 1-4-7-8-9-2-1, 1-2-9-8-7-4-1 |
+| *loop19* | 2-4-3-2, 2-3-4-2 | *loop20* | 2-4-5-3-2, 2-3-5-4-2 |
+| *loop21* | 2-6-5-3-4-2, 2-4-3-5-6-2, 2-6-5-4-3-2, 2-3-4-5-6-2 | *loop22* | 2-4-7-6-5-3-2, 2-6-7-4-5-3-2, 2-3-5-4-7-6-2, 2-3-5-6-7-4-2 |
+| *loop23* | 2-4-7-8-6-5-3-2, 2-3-5-4-7-8-6-2, 2-6-8-7-4-5-3-2, 2-3-5-6-8-7-4-2 | *loop24* | 2-3-5-4-7-8-9-6-2, 2-9-8-7-4-3-5-6-2, 2-9-8-7-6-5-4-3-2, 2-6-9-8-7-4-5-3-2, 2-9-8-6-7-4-5-3-2, 2-4-3-5-6-7-8-9-2 |
+| *loop25* | 2-3-5-4-7-6-9-2, 2-9-6-7-4-5-3-2 | *loop26* | 2-9-8-6-5-3-4-2, 2-4-3-5-6-8-9-2, 2-9-8-6-5-4-3-2, 2-3-4-5-6-8-9-2 |
+| *loop27* | 2-4-3-5-6-9-2, 2-3-4-5-6-9-2, 2-9-6-5-3-4-2, 2-9-6-5-4-3-2 | *loop28* | 2-3-5-4-7-8-9-2, 2-9-8-7-4-5-3-2 |
+| *loop29* | 2-6-7-4-3-2, 2-3-4-7-6-2 | *loop30* | 2-6-8-7-4-3-2, 2-3-4-7-8-6-2 |
+| *loop31* | 2-3-4-7-8-9-6-2, 2-9-8-6-7-4-3-2, 2-3-4-7-8-6-9-2, 2-6-9-8-7-4-3-2, 2-9-6-8-7-4-3-2, 2-3-4-7-6-8-9-2 | *loop32* | 2-9-6-7-4-3-2, 2-3-4-7-6-9-2 |
+| *loop33* | 2-3-4-7-8-9-2, 2-9-8-7-4-3-2 | *loop34* | 2-3-5-6-2, 2-6-5-3-2 |
+| *loop35* | 2-9-8-7-6-5-3-2, 2-3-5-6-7-8-9-2 | *loop36* | 2-9-8-6-5-3-2, 2-3-5-6-8-9-2 |
+| *loop37* | 2-3-5-6-9-2, 2-9-6-5-3-2 | *loop38* | 2-4-5-6-2, 2-6-5-4-2 |
+| *loop39* | 2-6-5-4-7-8-9-2, 2-9-8-7-4-5-6-2, 2-9-8-7-6-5-4-2, 2-4-5-6-7-8-9-2 | *loop40* | 2-4-5-6-8-9-2, 2-9-8-6-5-4-2 |
+| *loop41* | 2-4-5-6-9-2, 2-9-6-5-4-2 | *loop42* | 2-6-7-4-2, 2-4-7-6-2 |
+| *loop43* | 2-4-7-8-6-2, 2-6-8-7-4-2 | *loop44* | 2-9-8-6-7-4-2, 2-4-7-8-9-6-2, 2-6-9-8-7-4-2, 2-4-7-8-6-9-2, 2-9-6-8-7-4-2, 2-4-7-6-8-9-2 |
+| *loop45* | 2-4-7-6-9-2, 2-9-6-7-4-2 | *loop46* | 2-4-7-8-9-2, 2-9-8-7-4-2 |
+| *loop47* | 2-6-2 | *loop48* | 2-6-7-8-9-2, 2-9-8-7-6-2 |
+| *loop49* | 2-6-8-9-2, 2-9-8-6-2 | *loop50* | 2-6-9-2, 2-9-6-2 |
+| *loop51* | 3-4-5-3, 3-5-4-3 | *loop52* | 3-5-6-7-4-3, 3-4-7-6-5-3 |
+| *loop53* | 3-4-7-8-6-5-3, 3-5-6-8-7-4-3 | *loop54* | 3-5-6-9-8-7-4-3, 3-4-7-8-9-6-5-3 |
+| *loop55* | 4-5-6-7-4, 4-7-6-5-4 | *loop56* | 4-7-8-6-5-4, 4-5-6-8-7-4 |
+| *loop57* | 4-5-6-9-8-7-4, 4-7-8-9-6-5-4 | *loop58* | 6-7-8-6, 6-8-7-6 |
+| *loop59* | 6-7-8-9-6, 6-9-8-7-6 | *loop60* | 6-9-8-6, 6-8-9-6 |
+
+*Note.* Each number represents the following nodes: 1 = *anh*, 2 = *sad*, 3 = *slp*, 4 = *ene*, 5 = *slp*, 6 = *glt*, 7 = *con*, 8 = *mot*, 9 = *sui*.
+:::
+::::
 
 ## Currently..
 
@@ -380,12 +461,11 @@ Weigted degree variability & overlap level
 -   Connecting with empirical observations
 -   Running causal discovery to check for cycle patterns
 
-
 ```{r}
 #| label: fig-plots
 #| layout-ncol: 2
 #| out-width: 70%
-#| fig-cap: "Resulting graphs of precarity sum score and individual depression symptoms using FCI and CCI.13"
+#| fig-cap: "Resulting graphs of precarity sum score and individual depression symptoms using FCI and CCI."
 #| fig-subcap:
 #|   - "FCI"
 #|   - "CCI"

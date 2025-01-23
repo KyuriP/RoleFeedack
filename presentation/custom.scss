@@ -148,13 +148,33 @@ div {
 }
 
 
-.slides section .fragment { 
-opacity: 0; 
-visibility: hidden; 
-transition: all 1.5s ease; }
 
-.slides section .fragment.visible {
+/*-- cycle table smaller --*/
 
-opacity: 1;
+.custom-font-size3 table {
+  font-size: 13px; /* Adjust the size here */
+  margin-bottom: 0em;
+}
 
-visibility: inherit; }
+.custom-font-size3 table thead th {
+  background-color: lightgray;
+  color: white;
+  text-align: center;
+  font-size: 14px; 
+  font-family: Palatino;
+}
+
+.custom-font-size3{
+  font-size: 15px; 
+}
+
+
+/*-- simulation step 4: putting images close together --*/
+
+.reveal .slide ul li > *:first-child, .reveal .slide ol li > *:first-child{
+  margin-bottom: 0;
+}
+
+.reveal .slide ul li > *:last-child, .reveal .slide ol li > *:last-child {
+  margin-top: 0;
+}
