@@ -139,8 +139,8 @@ res@amat |> plotAG()
 # Data preparation
 edge_data <- data.frame(
   Edge = c("ene->sad", "glt->sad", "anh->sad", "anh->ene", "con->ene",
-           "sad->anh", "sad->ene", "slp->sad", "sad->glt"),
-  Percentage = c(21, 16, 16, 15, 15, 14, 13, 12, 11) / 202 * 100 #total network
+           "sad->anh", "sad->ene", "sad->glt", "slp->sad", "con->glt"),
+  Percentage = c(21, 16, 16, 15, 15, 14, 13, 13, 12, 12) / 203 * 100 #total network
 )
 
 # Modify edges to create expressions for mathematical notation
@@ -171,18 +171,17 @@ edgefreq <- ggplot(edge_data, aes(x = Edge, y = Percentage)) +
 # ggsave("figure/data_edgefreq.png", plot = edgefreq, width = 15, height = 10, units = "cm", dpi = 300)
 
 ## plot the networks
-high_A <- matrix(c(.30, 0.10, 0, 0.10, 0, 0, 0, 0, 0,
-                   0.33, .30, 0, 0.10, 0, 0.10, 0, 0, 0,
-                   0,  0.14, .30, 0, 0, 0, 0, 0, 0,
-                   0, 0.15, 0, .30, 0, 0, 0, 0, 0,
-                   0, 0, 0, 0, .30, 0.15, 0, 0, 0,
-                   0, .13, 0, 0, 0, .30, 0, 0, 0,
-                   0, 0, 0, 0.12, 0, 0, .30, 0, 0,
+dat_A <- matrix(c(.30, 0.1, 0, 0.1, 0, 0, 0, 0, 0,
+                   0.1, .30, 0, 0.1, 0, 0.1, 0, 0, 0,
+                   0,  0.1, .30, 0, 0, 0, 0, 0, 0,
+                   0, 0.1, 0, .30, 0, 0, 0, 0, 0,
+                   0, 0, 0, 0, .30, 0, 0, 0, 0,
+                   0, 0.1, 0, 0, 0, .30, 0, 0, 0,
+                   0, 0, 0, 0.1, 0, 0.1, .30, 0, 0,
                    0, 0, 0, 0, 0, 0, 0, .30, 0,
                    0, 0, 0, 0, 0, 0, 0, 0, .30), 9, 9, byrow = T)
-# Replace non-zero elements in the matrix with 1
-binary_A <- ifelse(high_A != 0, 1, 0)
-rownames(binary_A) <- colnames(binary_A) <- c("anh", "sad", "slp", "ene", "app", "glt", "con", "mot", "sui")
+
+rownames(dat_A) <- colnames(dat_A) <- c("anh", "sad", "slp", "ene", "app", "glt", "con", "mot", "sui")
 
 manual_layout <- matrix(c( -1.00000000,-0.3697451,
                            -0.25362943,-0.4206165,
@@ -197,7 +196,7 @@ manual_layout <- matrix(c( -1.00000000,-0.3697451,
 
 png(file = "figure/datanet.png", width=2000, height=2000, bg = 'transparent', family="Palatino")
 
-qgraph(binary_A, layout = manual_layout, edge.color = "steelblue4", label.color = "black", asize= 5, fade =F, vsize=10, esize = 3)
+qgraph(dat_A, layout = manual_layout, edge.color = "steelblue4", label.color = "black", asize= 5, fade =F, vsize=10, esize = 3)
 title(main="Top 10 Edge Network", cex.main=8, family = "Palatino", line=-1)
 
 dev.off()
