@@ -4,6 +4,10 @@ from matplotlib import pyplot as plt
 import sklearn
 import pandas as pd
 
+import seaborn as sns
+from sklearn.impute import KNNImputer
+
+
 import tigramite
 from tigramite import data_processing as pp
 from tigramite.toymodels import structural_causal_processes as toys
@@ -35,12 +39,26 @@ data.replace("NA", np.nan, inplace=True)
 # Convert all columns to numeric where possible
 data = data.apply(pd.to_numeric, errors="coerce")
 
-# Fill or drop NaNs
-# Option 1: Fill NaNs with zeros (for binary data, this assumes 'absent' symptom)
-data.fillna(0, inplace=True)
+# Check missing values before imputation
+print("Missing values per column before imputation:")
+print(data.isnull().sum())
 
-# Option 2: Drop rows with NaNs (if you prefer to exclude incomplete data)
-# data.dropna(inplace=True)
+# Apply KNN imputation
+imputer = KNNImputer(n_neighbors=5)  # Use 5 neighbors
+data_imputed = pd.DataFrame(imputer.fit_transform(data), columns=data.columns)
+
+# Ensure binary data by rounding the imputed values
+data_imp = data_imputed.round()
+
+# Check missing values after imputation
+print("Missing values per column after imputation:")
+print(data_imp.isnull().sum())
+
+# Verify all values are binary (0 or 1)
+print("Unique values in the data after rounding:")
+print(data_imp.apply(pd.Series.unique))
+
+
 
 # Rename columns for symptoms
 rename_mapping = {
@@ -54,7 +72,7 @@ rename_mapping = {
     "psychomotor": "mot",
     "appetite": "app"
 }
-data.rename(columns=rename_mapping, inplace=True)
+data_imp.rename(columns=rename_mapping, inplace=True)
 
 # Updated symptom columns
 symptom_columns = [
@@ -63,10 +81,10 @@ symptom_columns = [
 
 
 # Extract symptom data
-symptom_data = data[symptom_columns].values
+symptom_data = data_imp[symptom_columns].values
 
 # Extract the time index
-time_index = data["sessionN"].values
+time_index = data_imp["sessionN"].values
 
 # Specify variable names
 var_names = symptom_columns
@@ -82,7 +100,7 @@ print(dataframe)
 
 ## each patient version
 # Split the dataset by patient
-patients = data["PatID.x"].unique()
+patients = data_imp["PatID.x"].unique()
 
 
 # Dictionary to store results for each patient
@@ -93,7 +111,7 @@ for patient in patients:
     print(f"Running PCMCI for Patient {patient}")
     
     # Filter data for the current patient
-    patient_data = data[data["PatID.x"] == patient]
+    patient_data = data_imp[data_imp["PatID.x"] == patient]
     
     # Ensure the patient has enough data points
     if patient_data.shape[0] < 6:  # Assuming tau_max=3 requires at least 4 rows
@@ -163,7 +181,6 @@ for patient in patients:
 #     else:
 #         print(f"No results available for Patient {patient}. Skipping graph.")
     
-
 
 
 
