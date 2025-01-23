@@ -1,4 +1,4 @@
-# load packages
+
 library(modelr)
 library(dplyr)
 library(purrr)
@@ -13,6 +13,7 @@ library(stringr)
 
 # packages for plotting
 library(ggplot2)
+library(ggpubr)
 library(ggridges) # geom_ridges
 library(PupillometryR) # geom_flat_violin
 library(ggthemes)
@@ -23,4 +24,5 @@ library(grid) # for adding the overarching facet title
 library(gtable) # for adding the overarching facet title
 library(patchwork)
 library(qgraph)
+library(pcalg)
 

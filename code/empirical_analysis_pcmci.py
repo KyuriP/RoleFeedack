@@ -26,7 +26,7 @@ from tigramite.independence_tests.regressionCI import RegressionCI
 
 
 
-                              # Load the CSV file into a DataFrame
+# Load the CSV file into a DataFrame
 data = pd.read_csv("data_lea.csv", sep =";")
 
 # Replace 'NA' or string 'NaN' with np.nan for consistent handling
