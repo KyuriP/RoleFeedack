@@ -139,22 +139,55 @@ res@amat |> plotAG()
 # load schumacher et al. data
 lea <- read.csv2("data/data_lea.csv")[,1:12]
   
+## ===========================
+## result from PCMCI+
+## ===========================
+# anh o-o ene: 12 occurrences, 8.16%
+# ene o-o anh: 12 occurrences, 8.16%
+# 
+# anh o-o sad: 8 occurrences, 5.44%
+# sad o-o anh: 8 occurrences, 5.44%
+# 
+# con o-o ene: 7 occurrences, 4.76%
+# ene o-o con: 6 occurrences, 4.08%
+# 
+# ene --> sad: 7 occurrences, 4.76%
+# sad --> anh: 7 occurrences, 4.76%
+# 
+# ene o-o glt: 7 occurrences, 4.76%
+# glt o-o ene: 7 occurrences, 4.76%
+# 
+# glt --> sad: 7 occurrences, 4.76%
+# 
+# glt o-o sad: 7 occurrences, 4.76%
+# sad o-o glt: 7 occurrences, 4.76%
+# 
+# sad --> glt: 6 occurrences, 4.08%
+# 
+# anh --> sad: 6 occurrences, 4.08%
 
 
 # Data preparation
 edge_data <- data.frame(
-  Edge = c("anh -> ene", "sad -> con", "glt -> ene", "ene -> sad", "sad -> anh",
-           "anh -> sad", "glt -> sad", "con -> ene", "sad -> ene", "slp -> sad"),
-  Percentage = c(32, 32, 31, 31, 27, 26, 26, 25, 23, 22) / 203 * 100 #total network
+  Edge = c("anh o-o ene", "anh o-o sad", "con o-o ene", "ene --> sad", "sad --> anh",
+           "ene o-o glt","glt --> sad", "glt o-o sad", "sad --> glt", "anh --> sad"),
+  Percentage = c(24, 16, 13, 7, 7, 14, 7, 14, 6, 6) / 147 * 100 #total non-empty network
 )
 
-# Modify edges to create expressions for mathematical notation
-edge_data$Edge <- gsub("->", "%->%", edge_data$Edge)  # Replace -> with %->% for parse
-edge_data$Edge <- factor(edge_data$Edge, levels = edge_data$Edge[order(edge_data$Percentage)])
+edge_data <- data.frame(
+  Edge = c("anh o-o ene", "anh o-o sad", "glt o-o sad", "ene o-o glt", "con o-o ene", "sad --> anh","glt --> sad", "ene --> sad",  "sad --> glt", "anh --> sad"),
+  Percentage = c(24, 16, 14, 14, 13, 7, 7, 7, 6, 6) / 147 * 100 #total non-empty network
+)
 
-# Create the horizontal bar plot
-edgefreq <- ggplot(edge_data, aes(x = Edge, y = Percentage)) +
-  geom_bar(stat = "identity", fill = alpha("steelblue4", 0.9), color = "white", width=0.7) +
+# edge_data <- data.frame(
+#   Edge = c("anh -> ene", "sad -> con", "glt -> ene", "ene -> sad", "sad -> anh",
+#            "anh -> sad", "glt -> sad", "con -> ene", "sad -> ene", "slp -> sad"),
+#   Percentage = c(32, 32, 31, 31, 27, 26, 26, 25, 23, 22) / 203 * 100 #total network
+# )
+
+# Create the bar plot
+edgefreq <- ggplot(edge_data, aes(x = reorder(Edge, Percentage), y = Percentage)) +
+  geom_bar(stat = "identity", fill = alpha("steelblue4", 0.9), color = "white", width = 0.7) +
   coord_flip() +
   labs(
     title = "Top 10 Edge Frequencies",
@@ -162,18 +195,18 @@ edgefreq <- ggplot(edge_data, aes(x = Edge, y = Percentage)) +
     y = "Percentage (%)"
   ) +
   theme_classic(base_size = 12.5) +
-  scale_x_discrete(labels = function(labels) {
-    sapply(labels, function(x) parse(text = x))
-  })+
-  theme(legend.position = "none",
-        text = element_text(family="Palatino"),
-        plot.title = element_text(size = 13, hjust = 0.5, face="bold"),
-        axis.text.y = element_text(size = 14),
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        strip.background = element_blank())
+  scale_x_discrete(labels = rev(c("anh o-o ene", "anh o-o sad", "glt o-o sad", "ene o-o glt", "con o-o ene", expression("sad" %->% "anh"), expression("glt" %->% "sad"), expression("ene" %->% "sad"), expression("sad" %->% "glt"), expression("anh" %->% "sad")))) +
+  theme(
+    legend.position = "none",
+    text = element_text(family = "Palatino"),
+    plot.title = element_text(size = 13, hjust = 0.5, face = "bold"),
+    axis.text.y = element_text(size = 14),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    strip.background = element_blank()
+  )
 
-# ggsave("figure/data_edgefreq.png", plot = edgefreq, width = 15, height = 10, units = "cm", dpi = 300)
+# ggsave("figure/data_edgefreq_pcmci+.png", plot = edgefreq, width = 15, height = 10, units = "cm", dpi = 300)
 
 ## plot the networks
 dat_A <- matrix(c(.30, 0.1, 0, 0.1, 0, 0, 0, 0, 0,
