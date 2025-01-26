@@ -1,7 +1,9 @@
+![License](https://img.shields.io/github/license/KyuriP/RoleFeedack)
+![Coverage](https://img.shields.io/codecov/c/github/KyuriP/RoleFeedack)
+![Stars](https://img.shields.io/github/stars/KyuriP/RoleFeedack)
 <img src="https://github.com/KyuriP/RoleFeedack/blob/main/figure/feedback_logo.png" alt="Feedbaack Logo" width="100" align="left" style="margin-right: 15px;">
 
 # The Role of Feedback Loops in Dynamical Symptom Networks
-
 
 
 ## Overview
