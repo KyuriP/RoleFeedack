@@ -1,9 +1,10 @@
 ## =========================================================
-## Empirical Analysis 
+## Empirical Analysis
 ##
-## This script generates the bar plot and network given the results 
-## from running PCMCI+ algorithm on patients data. (Figure 9 from the paper).
-## Actualy running analysis code is in "the script empirical_analysis_pcmic.py".
+## This script generates the bar plot and network visualization 
+## based on the results obtained from the PCMCI+ algorithm applied to patient data 
+## (corresponding to Figure 9 in the paper).
+## Note: The actual analysis code is located in "empirical_analysis_pcmci.py".
 ## =========================================================
 
 
@@ -147,9 +148,9 @@ manual_layout <- matrix(c( -1.00000000,-0.3697451,
                            0.41570786,-1.0000000), 9, 2, byrow=T)
 
 
-png(file = "figure/datanet.png", width=2000, height=2000, bg = 'transparent', family="Palatino")
+# png(file = "figure/datanet.png", width=2000, height=2000, bg = 'transparent', family="Palatino")
 
 qgraph(dat_A, layout = manual_layout, edge.color = "steelblue4", label.color = "black", asize= 5, fade =F, vsize=10, esize = 3)
 title(main="Top 10 Edge Network", cex.main=8, family = "Palatino", line=-0.5)
 
-dev.off()
+# dev.off()

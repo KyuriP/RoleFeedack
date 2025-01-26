@@ -83,7 +83,7 @@ colnames(ex1) <- colnames(ex2) <- colnames(ex3) <- colnames(ex4) <- c("A", "B", 
 
 
 # 1 by 4 layout
-pdf(file = "example_net.pdf", width=50, height=10, bg = 'transparent', family="Palatino")
+# pdf(file = "example_net.pdf", width=50, height=10, bg = 'transparent', family="Palatino")
 
 par(mfrow=c(1,4), mar=c(1,1,1,1), oma=c(10,0,0,0))
 qgraph(ex1, layout = "circle", asize= 4, edge.width = 6, vsize = 20, label.cex = 1.3, title = "(a)", title.cex = 7, label.font = 2, color = alpha("darkgray", 0.3))
@@ -96,11 +96,11 @@ qgraph(ex4, layout = "circle", asize= 4, edge.width = 6, vsize = 20, label.cex =
 mtext(expression(atop(A %->% B), A %->% B %->% C), side = 1, line = 7, cex = 4, xpd=TRUE)
 
 
-dev.off()
+# dev.off()
 
 
 # 2 by 2 layout
-pdf(file = "example_net2.pdf", width=35, height=35, bg = 'transparent', family="Palatino")
+# pdf(file = "example_net2.pdf", width=35, height=35, bg = 'transparent', family="Palatino")
 
 par(mfrow=c(2,2), mar=c(40,50,30,50), oma=c(10,0,0,0))
 qgraph(ex1, layout = "circle", asize= 4.5, edge.width = 6, vsize = 11, label.cex = 1.3, title = "(a)", title.cex = 7, label.font = 2, color = alpha("lightgray", 0.85), border.width = 2.5)
@@ -112,4 +112,4 @@ mtext("no feedback loop", side = 1, line = 7, cex = 5, xpd=TRUE)
 qgraph(ex4, layout = "circle", asize= 4.5, edge.width = 6, vsize = 11, label.cex = 1.3, title = "(d)", title.cex = 7, label.font = 2, color = alpha("lightgray", 0.85), esize = c(2.1,1,1), border.width = 2.5)
 mtext(expression(A %->% C %->% B %->% A), side = 1, line = 7, cex = 5, xpd=TRUE)
 
-dev.off()
+# dev.off()
