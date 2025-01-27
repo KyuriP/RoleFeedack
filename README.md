@@ -1,5 +1,5 @@
 ![License](https://img.shields.io/github/license/KyuriP/RoleFeedack?cacheBust=1)
-![GitHub CI](https://github.com/KyuriP/RoleFeedback/actions/workflows/ci.yml/badge.svg?cacheBust=1)
+![GitHub CI](https://github.com/KyuriP/RoleFeedback/actions/workflows/ci.yml/badge.svg)
 ![Stars](https://img.shields.io/github/stars/KyuriP/RoleFeedack)
 <img src="https://github.com/KyuriP/RoleFeedack/blob/main/figure/feedback_logo.png" alt="Feedbaack Logo" width="100" align="left" style="margin-right: 15px;">
 
