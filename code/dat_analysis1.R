@@ -18,18 +18,23 @@ source("code/helper_func.R")
 
 
 
-# get the number of loops 
-loop_numbers <- c()
-for (i in 1:length(all_networks)){
-  loop_numbers[i] <- find_loops(create_adjacency_list(all_networks[[i]]), all_networks[[i]]) |> length()
-}
-loop_numbers <- loop_numbers - 9 # deduct the self-loops
+# ================================
+# Calculate number of feedback loops
+# ================================
+loop_numbers <- purrr::map_dbl(all_networks, \(network) {
+  find_loops(create_adjacency_list(network), network) |> length() - 9 # subtract self-loops
+})
 
-# get loop length and relative weighted length
-loop_info <- all_networks |> 
-  purrr::map(\(x) find_loops(create_adjacency_list(x), x) |> 
-               purrr::list_rbind(names_to = "id") |>
-               filter(loop_length != 1) )
+
+# ================================
+# Extract loop information and statistics
+# ================================
+loop_info <- purrr::map(all_networks, \(network) {
+  find_loops(create_adjacency_list(network), network) |>
+    purrr::list_rbind(names_to = "id") |>
+    dplyr::filter(loop_length != 1) # exclude self-loops
+})
+
 
 # get weighted degree variability
 sd_info <- all_networks |>
@@ -43,14 +48,6 @@ cycles <- loop_info |>
 
 # weighted degree variability
 deg_sd <- sd_info$sumsdStr
-
-# max_str_sd <- rel_strength$min  / sd_info$sumsdStr
-# max_str_sd <- rel_strength$Mean / sd_info$sumsdStr
-# 
-# spec_rad_sd <- spec_rad / sd_info$sumsdStr
-# 
-# jaccard <- cycles |>
-#   purrr::map_dbl(~.x |> calculate_jaccard_similarity())
 
 
 # get frequency of node
@@ -70,7 +67,9 @@ freq_node <- loop_info |>
   })
 
 
-
+# ================================
+# Feedback loop overlap calculations
+# ================================
 common_cycle <- loop_info |> 
   # extract node number without the first node that repeats
   purrr::map(\(x) str_extract_all(x$id, "\\d", simplify = T)[,-1] |> 
@@ -88,14 +87,14 @@ nos1 <- common_cycle |> purrr::map_dbl(list("nos1", 1), .default = 0)
 nos2 <- common_cycle |> purrr::map_dbl(list("nos2", 1), .default = 0)
 
 
+# ================================
+# Combine results into data frames
+# ================================
 # original result df
 comb_res <- rbind(original_res2, res2) |>
   dplyr::mutate(nloop = rep(loop_numbers, each =5),
                 nos1 = rep(nos1, each = 5),
                 nos2 = rep(nos2, each = 5)) |>
-  #jaccard = rep(jaccard, each = 5),
-  #specrad = rep(spec_rad, each = 5)) |>
-  #max_str_var = rep(max_str_var, each = 5)) |>
   pivot_longer(!c(nloop, mat), names_to = "sim", values_to = "value") |>
   dplyr::mutate(matr = stringr::str_extract_all(mat, "\\d+", simplify = T)[,1],
                 t = factor(stringr::str_extract_all(mat, "\\d+", simplify = T)[,2], levels = c("400", "800", "1200", "1600", "2000")),
@@ -109,11 +108,6 @@ comb_avg_res <- rbind(ori_avg_res, avg_res) |>
   dplyr::mutate(loop_numbers = rep(loop_numbers, each =5),
                 nos1 = rep(nos1, each = 5),
                 nos2 = rep(nos2, each = 5),
-                #jaccard = rep(jaccard, each = 5),
-                #specrad = rep(spec_rad, each = 5),
-                # max_str_sd = rep(max_str_sd, each = 5),
-                #specrad_sd = rep(spec_rad_sd, each = 5),
-                #length = rep(length, each = 5),
                 deg_sd = rep(deg_sd, each = 5)) |>
   # pivot_longer(!c(nloop, mat, common_score), names_to = "sim", values_to = "value") |>
   dplyr::mutate(matr = stringr::str_extract_all(mat, "\\d+", simplify = T)[,1], 

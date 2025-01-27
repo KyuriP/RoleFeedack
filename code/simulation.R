@@ -1,11 +1,16 @@
+
 ## =========================================================
-## Main Simulation
+## Main Simulation Script
 ##
-## Generate all unique network configurations based on the given matrix A.
-## Simulate the system dynamics 50 times for each network configuration.
-## Average the results across simulations and save the aggregated values.
-## Note: While the original A matrix is processed here, the other configurations
-## were run separately on Snellius, with scripts available in the "snellius" folder.
+## Description:
+## - Generate all unique network configurations based on the provided matrix A.
+## - Simulate system dynamics 50 times for each network configuration.
+## - Compute and save the average results across simulations.
+##
+## Note:
+## - The original matrix A is processed here.
+## - Additional configurations were executed separately on Snellius.
+##   Corresponding scripts can be found in the "snellius" folder.
 ## =========================================================
 
 ## install packages
@@ -24,7 +29,7 @@ source("code/gen_network.R")
 
 # get all networks
 # Main execution
-## weigthed adjacency matrix
+## weighted adjacency matrix
 A <- matrix(c( .30, 0, 0, 0, 0, 0, 0, 0, 0,
                .33, .30, .14, .15, 0, .13, 0, 0, .15,
                0,  0, .30, .22, .23, 0, 0, 0, 0,
@@ -70,7 +75,6 @@ n_steps <- as.integer(timelength / deltaT) # must be a number greater than 1
 D_stoeq1 <- 0.01  # before shock
 # t_shock <- 1000 # time that shock begins
 t_shock <- 50 # time that shock begins
-
 shock_duration <- 300 # shock duration time points
 
 # shock period 
@@ -136,19 +140,18 @@ real_all_networks <- all_networks[-c(duplicate_indices)]
 
 # =======================================
 # load data (run from snellius)
-res16384 <- readRDS("data/res_16384.rds")
-# "mat order" has to be manually edited 
-res32768 <- readRDS("data/res_32768.rds") |> dplyr::mutate(mat = paste0(rep(16385:32768, each = 5),"-", c(400, 800, 1200, 1600, 2000)))
-res49152 <- readRDS("data/res_49152.rds") |> dplyr::mutate(mat = paste0(rep(32769:49152, each = 5),"-", c(400, 800, 1200, 1600, 2000)))
-res65536 <- readRDS("data/res_65536.rds") |> dplyr::mutate(mat = paste0(rep(49153:65536, each = 5),"-", c(400, 800, 1200, 1600, 2000)))
-res81920 <- readRDS("data/res_81920.rds") |> dplyr::mutate(mat = paste0(rep(65537:81920, each = 5),"-", c(400, 800, 1200, 1600, 2000)))
-res98304 <- readRDS("data/res_98304.rds") |> dplyr::mutate(mat = paste0(rep(81921:98304, each = 5),"-", c(400, 800, 1200, 1600, 2000)))
-res114688 <- readRDS("data/res_114688.rds") |> dplyr::mutate(mat = paste0(rep(98305:114688, each = 5),"-", c(400, 800, 1200, 1600, 2000)))
-res131071 <- readRDS("data/res_131071.rds") |> dplyr::mutate(mat = paste0(rep(114689:131071, each = 5),"-", c(400, 800, 1200, 1600, 2000)))
+file_paths <- list.files("data", full.names = TRUE, pattern = "res_.*\\.rds")
+res_list <- purrr::map(file_paths, readRDS)
+res2 <- purrr::map2_dfr(res_list, seq_along(res_list), ~ {
+  n_rows <- nrow(.x)
+  start_index <- (.y - 1) * 16384 + 1
+  end_index <- .y * 16384
+  .x |> 
+    dplyr::mutate(mat = paste0(rep(seq(start_index, end_index), each = 5)[1:n_rows], "-", c(400, 800, 1200, 1600, 2000)))
+})
 
-# bind'em together
-res2 <- res16384 |> bind_rows(res32768, res49152, res65536, res81920, res98304, res114688, res131071) 
-rm(res16384, res32768, res49152, res65536, res81920, res98304, res114688, res131071)
+# Remove the list to free up memory after combining the results
+rm(res_list)
 
 # filter the duplicated ones
 new_res2 <- res2 |> filter(!stringr::str_detect(mat, paste0("^((", paste(dup_ind, collapse = "|"), ")-)")))
@@ -167,7 +170,7 @@ avg_res <- res2 |>
 # plan(multicore)
 # message("Number of parallel workers: ", nbrOfWorkers())
 # 
-# run simulation on all the rest network configs (this has now run on SNELLIUS)
+# run simulation on all the rest network configs (these run on SNELLIUS)
 # 
 # aggregated <- furrr::future_map(1:n_sims, function(i) {
 #   furrr::future_map(1:length(all_networks), function(j) { euler_stochastic2(
