@@ -124,9 +124,8 @@ comb_avg_res <- rbind(ori_avg_res, avg_res) |>
                   nos1 >= 0.20 ~ "0.20+",
                 )
   ) |>
-  # remove the same matrices (due to the bidirectional one mistake 2^15 * 3 = 98304)
+  # remove the same matrices (due to the bidirectional loop: 2^15 * 3 = 98304)
   filter(!as.numeric(matr) %in% dup_ind)
-
 
 ## ================================
 ## Figure1: number of feedback loop

@@ -1,12 +1,9 @@
 ## =========================================================
 ## Data Analysis - Part 3
 ##
-## This script focuses on analyzing the simulated data by examining 
-## the frequencies of unique feedback loops. Based on the results, 
-## it generates a figure that visualize these patterns, 
-## which is included in the Appendix of the paper.
+## Analyzing the frequencies of unique feedback loops and visualizing patterns.
+## The results are included in the Appendix of the paper.
 ## =========================================================
-
 
 
 # Function to normalize cycle
@@ -17,7 +14,7 @@ normalize_cycle <- function(cycle) {
 }
 
 
-# find cycles
+# Calculate cycle frequencies for high and low symptom level networks
 cycles_high <- high_net |> 
   map_depth(2, ~.x |> transmute(id = map_chr(id, normalize_cycle))) |> map(~unlist(.x) |> table() |> prop.table() |>as.data.frame()) |>
   map_dfr(~.x , .id = "t") |> summarize(freq_m = mean(Freq), freq_sd = sd(Freq), .by = Var1) 
@@ -26,17 +23,15 @@ cycles_low <- low_net |>
   map_depth(2, ~.x |> transmute(id = map_chr(id, normalize_cycle))) |> map(~unlist(.x) |> table() |> prop.table() |>as.data.frame()) |>
   map_dfr(~.x , .id = "t") |> summarize(freq_m = mean(Freq), freq_sd = sd(Freq), .by = Var1) 
 
-  # map_depth(2, ~ .x$id) |> map(~unlist(.x) |> table() |> prop.table() |>as.data.frame()) |>
-  #  map_dfr(~.x , .id = "t") |> summarize(freq_m = mean(Freq), freq_sd = sd(Freq), .by = Var1)
 
-# table for checking the ids of cycle
+# Table for checking normalized cycle IDs
 tab <- high_net |> 
   map_depth(2, ~.x |> mutate(idnorm = map_chr(id, normalize_cycle)) |> select(id, idnorm)) |> bind_rows() |>
   group_by(idnorm) %>%
   summarize(ids = paste(unique(id), collapse = ", ")) 
 
 
-
+# Combine and compare cycle frequencies
 freq_cycle <- cycles_high |> full_join(cycles_low, by = "Var1") |>
   set_names(c("cycle", "mean_high","sd_high", "mean_low", "sd_low")) |>
   # replace NA with 0
@@ -53,15 +48,14 @@ freq_cycle <- cycles_high |> full_join(cycles_low, by = "Var1") |>
 
 
 
-# just to check the order
+# Just to check the order
 freq_cycle |> filter(condition == "high") |> arrange(desc(mean)) |> print(n = 20)
 freq_cycle |> filter(condition == "low") |> arrange(desc(mean)) |> print(n =15)
 
 
-# overlapping edge (mot -> sui)
+# Overlapping edge (mot -> sui)
 freq_cycle$high_diff[c(97, 98)] <- TRUE # loop 49 not overlapping hence TRUE
 freq_cycle$high_diff[c(95, 96, 47, 48, 5, 6)] <- FALSE # loop 24, 48, 3: not high cycles hence FALSE
-
 
 
 

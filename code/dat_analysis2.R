@@ -6,10 +6,15 @@
 ## (e.g., Figure 6, Figure 7, Figure 8) to visualize these patterns.
 ## =========================================================
 
-# time points to use
+
+# Define time points to use
 ts <- c(800, 1200, 1600, 2000)
 
-# high level networks
+## ================================
+## High-Level and Low-Level Networks
+## ================================
+
+# Extract high-level networks
 highnet <- ts |> map(function(x) {
   comb_avg_res |>
     filter(t == x, nloop!=0) |>
@@ -17,7 +22,7 @@ highnet <- ts |> map(function(x) {
 }) |> set_names(paste0("t", ts)) #|>
   bind_rows(.id = "id")
 
-# low level networks
+# Extract low-level networks
 lownet <- ts |> map(function(x) {
   comb_avg_res |>
     # for low net, we exclude the acyclic ones as they are not informative 
@@ -27,20 +32,25 @@ lownet <- ts |> map(function(x) {
  bind_rows(.id = "id")
 
 
-# get the indices for both groups
+# Get indices for high- and low-level networks
 high_idx <- highnet |> map(~ transmute(.x, matr = as.numeric(matr) + 1) |> unlist())
 low_idx <- lownet |> map(~ transmute(.x, matr = as.numeric(matr) + 1) |> unlist())
 
 # high_idx <-  highnet$matr |> as.numeric() + 1
 # low_idx <- lownet$matr |> as.numeric() + 1
 
-# for cycles
+# Extract feedback loop information
 high_net <- high_idx |> map(\(x) loop_info[x])
 low_net <- low_idx |> map(\(x) loop_info[x])
 
 # high_net <- loop_info[high_idx]
 # low_net <- loop_info[low_idx]
 
+## ================================
+## Node Frequency Analysis
+## ================================
+
+# Calculate node frequencies for high-level networks
 high_node <- high_net |> purrr::map_depth(2, \(x) str_extract_all(x$id, "\\d", simplify = T)[,-1] |> 
                           table(exclude = "") |> as.data.frame()) |> 
                             map(~.x |> list_rbind() |>
@@ -49,6 +59,7 @@ high_node <- high_net |> purrr::map_depth(2, \(x) str_extract_all(x$id, "\\d", s
   total = total / Totalsum)
   )
 
+# Calculate node frequencies for low-level networks
 low_node <- low_net |> purrr::map_depth(2, \(x) str_extract_all(x$id, "\\d", simplify = T)[,-1] |> 
                                           table(exclude = "") |> as.data.frame()) |> 
   map(~.x |> list_rbind() |>
@@ -62,16 +73,17 @@ low_node <- low_net |> purrr::map_depth(2, \(x) str_extract_all(x$id, "\\d", sim
 #   summarize(total = sum(Freq), .by = Var1) |>
 #   mutate(total = total/sum(total))
   
-# check the node frequency 
+# Combine node frequencies across time points
 df_hnode <- high_node |> map_dfr(~.x, .id = "t") 
 df_lnode <- low_node |> map_dfr(~.x, .id = "t") 
 
+# Plot node frequencies
 bind_rows(df_hnode, df_lnode, .id = "id") |>
   ggplot(aes(x = factor(Var1, level = c(1:9)), y = total, col = id, group = id)) +
   geom_point()+ geom_line() +
   facet_wrap(~t)
 
-# combined across diff t
+# Combine node frequencies across all time points (with mean and error bars)
 comb_hnode <- df_hnode |> summarize(m = mean(total), sd = sd(total), me = 1.96 * sd / sqrt(4),  .by = Var1)
 comb_lnode <- df_lnode |> summarize(m = mean(total), sd = sd(total),  me = 1.96 * sd / sqrt(4), .by = Var1)
 
@@ -101,6 +113,10 @@ node_plot <- bind_rows(comb_hnode, comb_lnode, .id = "id") |>
 
   
 
+## ================================
+## Edge Frequency Analysis
+## ================================
+
 # Function to extract edges from a cycle
 extract_edges <- function(cycle) {
   edges <- list()
@@ -113,12 +129,12 @@ extract_edges <- function(cycle) {
 }
 
 
-# get the edge freq proportion for the cycles
+# Calculate edge frequencies for high- and low-level networks
 high_edges <- high_net |>  purrr::map_depth(2, \(x) x$id |> extract_edges()) |> map(~.x |> unlist() |> table() |> prop.table() |> as.data.frame())
 low_edges <- low_net |>  purrr::map_depth(2, \(x) x$id |> extract_edges()) |> map(~.x |> unlist() |> table() |> prop.table() |> as.data.frame())
 # low_edges <- low_net |>  purrr::map(\(x) x$id |> extract_edges()) |> unlist() |> table()  |> prop.table() |> as.data.frame()
 
-
+# Summarize top edge frequencies
 top10_he <- high_edges |> map_dfr(~.x ,id = "t") |> summarize(freq_m = mean(Freq), freq_sd = sd(Freq), freq_me = 1.96 * freq_sd / sqrt(4), .by = Var1)
 top10_le <- low_edges |>  map_dfr(~.x ,id = "t") |> summarize(freq_m = mean(Freq), freq_sd = sd(Freq), freq_me = 1.96 * freq_sd / sqrt(4), .by = Var1)
 
@@ -126,6 +142,7 @@ top10_he |> arrange(desc(freq_m))# |> filter(freq_m >= 0.035)
 top10_le |> arrange(desc(freq_m)) #|> filter(freq_m >= 0.035)
 
 
+# Summarize top edge frequencies
 plotdf <- top10_he |> full_join(top10_le, by = join_by(Var1)) |>
   set_names(c("edge", "highnet_m","highnet_sd", "highnet_me", "lownet_m", "lownet_sd", "lownet_me")) |>
   mutate(diff = highnet_m - lownet_m) |>
