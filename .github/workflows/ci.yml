@@ -23,11 +23,11 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install pytest  # Install pytest or any other dependencies you need
-          # Add any additional dependencies below if needed
-          # pip install <other-package-name>
-
+          pip list  # List installed packages to check if pytest is installed
+          
       - name: Run Tests
         run: |
-          # Run your tests here, for example:
-          pytest  # Replace with your actual test command
+          pytest --version  # Check the pytest version to verify installation
+          pytest  # Run your tests here
+
 
