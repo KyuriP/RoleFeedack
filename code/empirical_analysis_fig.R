@@ -15,7 +15,7 @@
 
 # load schumacher et al. data
 lea <- read.csv2("data/data_lea.csv")[,1:12]
-  
+
 ## ===========================
 ## result from PCMCI+
 ## ===========================
@@ -76,7 +76,7 @@ lea <- read.csv2("data/data_lea.csv")[,1:12]
 edge_data <- data.frame(
   Edge = c("glt -> sad", "ene -> sad", "sad -> anh", "anh -> sad", "sad -> glt",
            "glt -> app", "con -> slp", "ene -> slp", "con -> mot", "sad -> con"),
-  Percentage = c(7, 7, 7, 6, 6, 5, 5, 5, 5, 4) / 147 * 100 #total network
+  Percentage = c(7, 7, 7, 6, 6, 5, 5, 5, 5, 4) / 139 * 100 #total network
 )
 
 # Modify edges to create expressions for mathematical notation
