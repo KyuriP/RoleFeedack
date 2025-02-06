@@ -10,3 +10,7 @@ data/data_lea.csv
 presentation/feedback_role.qmd
 code/find_example_net.R
 code/dat_analysis_Xinhai.R
+*.pper
+/.Rproj.user
+comb_avg_res.rds
+comb_res.rds

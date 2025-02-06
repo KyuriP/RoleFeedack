@@ -108,7 +108,7 @@ original_res2 <- purrr::map(1:n_sims, ~ euler_stochastic2(
 # get the average for the original A
 ori_avg_res <- original_res2 |>
   rowwise() |>
-  mutate(avg = mean(total...1:total...50)) |>
+  dplyr::mutate(avg = mean(c_across(starts_with("total...")))) |>
   select(avg, mat) |>
   ungroup() # cancel rowwise
 
@@ -140,18 +140,33 @@ real_all_networks <- all_networks[-c(duplicate_indices)]
 
 # =======================================
 # load data (run from snellius)
-file_paths <- list.files("data", full.names = TRUE, pattern = "res_.*\\.rds")
-res_list <- purrr::map(file_paths, readRDS)
-res2 <- purrr::map2_dfr(res_list, seq_along(res_list), ~ {
-  n_rows <- nrow(.x)
-  start_index <- (.y - 1) * 16384 + 1
-  end_index <- .y * 16384
-  .x |> 
-    dplyr::mutate(mat = paste0(rep(seq(start_index, end_index), each = 5)[1:n_rows], "-", c(400, 800, 1200, 1600, 2000)))
-})
+res16384 <- readRDS("data/res_16384.rds")
+# "mat order" has to be manually edited 
+res32768 <- readRDS("data/res_32768.rds") |> dplyr::mutate(mat = paste0(rep(16385:32768, each = 5),"-", c(400, 800, 1200, 1600, 2000)))
+res49152 <- readRDS("data/res_49152.rds") |> dplyr::mutate(mat = paste0(rep(32769:49152, each = 5),"-", c(400, 800, 1200, 1600, 2000)))
+res65536 <- readRDS("data/res_65536.rds") |> dplyr::mutate(mat = paste0(rep(49153:65536, each = 5),"-", c(400, 800, 1200, 1600, 2000)))
+res81920 <- readRDS("data/res_81920.rds") |> dplyr::mutate(mat = paste0(rep(65537:81920, each = 5),"-", c(400, 800, 1200, 1600, 2000)))
+res98304 <- readRDS("data/res_98304.rds") |> dplyr::mutate(mat = paste0(rep(81921:98304, each = 5),"-", c(400, 800, 1200, 1600, 2000)))
+res114688 <- readRDS("data/res_114688.rds") |> dplyr::mutate(mat = paste0(rep(98305:114688, each = 5),"-", c(400, 800, 1200, 1600, 2000)))
+res131071 <- readRDS("data/res_131071.rds") |> dplyr::mutate(mat = paste0(rep(114689:131071, each = 5),"-", c(400, 800, 1200, 1600, 2000)))
 
-# Remove the list to free up memory after combining the results
-rm(res_list)
+# bind'em together
+res2 <- res16384 |> bind_rows(res32768, res49152, res65536, res81920, res98304, res114688, res131071) 
+rm(res16384, res32768, res49152, res65536, res81920, res98304, res114688, res131071)
+
+
+# file_paths <- list.files("data", full.names = TRUE, pattern = "res_.*\\.rds")
+# res_list <- purrr::map(file_paths, readRDS)
+# res2 <- purrr::map2_dfr(res_list, seq_along(res_list), ~ {
+#   n_rows <- nrow(.x)
+#   start_index <- (.y - 1) * 16384 + 1
+#   end_index <- .y * 16384
+#   .x |> 
+#     dplyr::mutate(mat = paste0(rep(seq(start_index, end_index), each = 5)[1:n_rows], "-", c(400, 800, 1200, 1600, 2000)))
+# })
+# 
+# # Remove the list to free up memory after combining the results
+# rm(res_list)
 
 # filter the duplicated ones
 new_res2 <- res2 |> filter(!stringr::str_detect(mat, paste0("^((", paste(dup_ind, collapse = "|"), ")-)")))

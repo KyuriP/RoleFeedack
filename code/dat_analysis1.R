@@ -29,11 +29,11 @@ loop_numbers <- purrr::map_dbl(all_networks, \(network) {
 # ================================
 # Extract loop information and statistics
 # ================================
-loop_info <- purrr::map(all_networks, \(network) {
-  find_loops(create_adjacency_list(network), network) |>
-    purrr::list_rbind(names_to = "id") |>
-    dplyr::filter(loop_length != 1) # exclude self-loops
-})
+# get loop length and relative weighted length
+loop_info <- all_networks |> 
+  purrr::map(\(x) find_loops(create_adjacency_list(x), x) |> 
+               purrr::list_rbind(names_to = "id") |>
+               filter(loop_length != 1) )#  exclude self-loops
 
 
 # get weighted degree variability
@@ -126,6 +126,9 @@ comb_avg_res <- rbind(ori_avg_res, avg_res) |>
   ) |>
   # remove the same matrices (due to the bidirectional loop: 2^15 * 3 = 98304)
   filter(!as.numeric(matr) %in% dup_ind)
+
+# saveRDS(comb_res, file = "comb_res.rds")
+# saveRDS(comb_avg_res, file = "comb_avg_res.rds")
 
 ## ================================
 ## Figure1: number of feedback loop
@@ -259,6 +262,7 @@ selected_data <- comb_avg_res |>
   filter(t == 1200, loop_numbers != 0) |>
   # filter(t == 1200, loop_numbers != 0, loop_numbers <= 20, loop_numbers > 1) |>
   select(deg_sd, nos1, loop_numbers, max_str_sd, avg) 
+
 
 # set the x, y, and z variables
 x <- selected_data$loop_numbers #comb_avg_res$nloop
