@@ -37,6 +37,7 @@ print("Missing values per column before imputation:")
 print(data.isnull().sum())
 
 # Impute missing values using KNN
+np.random.seed(42)  # Set a fixed random seed 
 imputer = KNNImputer(n_neighbors=5)
 data_imputed = pd.DataFrame(imputer.fit_transform(data), columns=data.columns)
 data_imputed = data_imputed.round()  # Ensure binary values
@@ -210,10 +211,10 @@ for patient, results in patient_results.items():
 # Count edge frequencies
 edge_counts = Counter(directed_edges)
 
-# # Print all directed edges with their counts
-# print("Directed Edges with Frequencies:")
-# for edge, count in edge_counts.items():
-#     print(f"{edge}: {count} occurrences")
+# Print all directed edges with their counts
+print("Directed Edges with Frequencies:")
+for edge, count in edge_counts.items():
+    print(f"{edge}: {count} occurrences")
 
 # Calculate percentages based on the total number of edges
 total_edges = len(directed_edges)
@@ -249,32 +250,51 @@ for edge, percentage in most_common_edges:
 #     "y": np.sin(np.linspace(0, 2 * np.pi, len(symptom_columns), endpoint=False)),
 # }
 
-# # Plot only for specific patients
-# patients_to_plot = [15, 19, 20, 27, 28, 100]
+# Plot only for specific patients
+patients_to_plot = [17, 28, 32, 36, 39, 45]
 
-# # Loop through specified patients
-# for patient in patients_to_plot:
-#     if patient in patient_results:
-#         print(f"Plotting graph for Patient {patient}")
-#         results = patient_results[patient]
+# Predefine node positions for uniform layouts
+node_positions = {
+    "x": np.cos(np.linspace(0, 2 * np.pi, len(symptom_columns), endpoint=False)),
+    "y": np.sin(np.linspace(0, 2 * np.pi, len(symptom_columns), endpoint=False)),
+}
+
+# Store figures for later combination (optional)
+figures = []
+
+# Loop through specified patients
+for patient in patients_to_plot:
+    if patient in patient_results:
+        print(f"Plotting graph for Patient {patient}")
+        results = patient_results[patient]
         
-#         # Create plot
-#         fig, ax = tp.plot_graph(
-#             val_matrix=results['val_matrix'],
-#             graph=results['graph'],
-#             var_names=symptom_columns,
-#             link_colorbar_label='Cross-MCI',
-#             node_colorbar_label=None,  # No colorbar for nodes
-#             node_pos=node_positions,
-#             arrow_linewidth=5,  # Adjust edge thickness here
-#             figsize=(6, 6),
-#         )
-#         ax.set_title(f"Patient {patient} - Causal Graph")
-#         figures.append(fig)  # Store for later use
+        # Exclude "o-o" edges (undirected) from the graph
+        graph = results['graph']
+        p_matrix = results['p_matrix']
+        alpha_level = 0.01
 
-#         # Show the updated plot
-#         plt.show()
-#     else:
-#         print(f"No results available for Patient {patient}. Skipping graph.")
+        # Iterate through the graph and remove "o-o" edges
+        for i in range(graph.shape[0]):
+            for j in range(graph.shape[1]):
+                for lag in range(graph.shape[2]):
+                    if "o-o" in graph[i, j, lag]:
+                        graph[i, j, lag] = ''  # Remove undirected edge
 
+        # Create plot (using the filtered graph)
+        fig, ax = tp.plot_graph(
+            val_matrix=results['val_matrix'],
+            graph=graph,  # Use the modified graph with "o-o" edges removed
+            var_names=symptom_columns,
+            link_colorbar_label='Cross-MCI',
+            node_colorbar_label=None,  # No colorbar for nodes
+            node_pos=node_positions,
+            arrow_linewidth=5,  # Adjust edge thickness here
+            figsize=(6, 6),
+        )
+        ax.set_title(f"Patient {patient} - Causal Graph")
+        figures.append(fig)  # Store for later use
 
+        # Show the updated plot
+        plt.show()
+    else:
+        print(f"No results available for Patient {patient}. Skipping graph.")
