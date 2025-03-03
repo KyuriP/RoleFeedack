@@ -7,7 +7,9 @@
 
 ## Overview
 
-This repository provides the computational tools and analysis scripts used to study the role of feedback loops in dynamical symptom networks. The focus is on simulating and analyzing various network configurations to explore the influence of feedback loop structures on symptom dynamics.
+This repository contains computational tools and analysis scripts for studying the role of feedback loops in dynamical symptom networks. It focuses on simulating and analyzing various network configurations to explore how feedback loop structures influence symptom dynamics.
+For more details, please refer to: [The Role of Feedback Loops in Dynamical Symptom Networks](https://osf.io/preprints/psyarxiv/ed9yv_v1).
+
 
 ## Repository Structure
 
