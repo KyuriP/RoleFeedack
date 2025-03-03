@@ -102,13 +102,11 @@ Session information updated at 2025-02-11 00:17
 
 </details>
 
-<!--## Citation
+## Citation
 
 If you use this repository or find the work helpful, please cite:
 
-> Kyuri Park, Lourens Waldorp, and Vítor V. Vasconcelos.  
-> "The Individual- and Population-level Mechanistic Implications of Statistical Networks of Symptoms (2024)"  
-> [Link to Preprint](#) (update link)-->
+> Park, K., Waldorp, L., Lees, M., & Vasconcelos, V. (2025, February 11). The Role of Feedback Loops in Dynamical Symptom Networks. https://doi.org/10.31234/osf.io/ed9yv_v1
 
 
 
