@@ -51,11 +51,10 @@ mod_spec <- function(scenario = "base", init_val = 0, mat, ...){
     lhs <- paste0("dS", paste0("_",colnames(A)[x]))
     sumAj <- paste0("S", paste0("_",colnames(A)[-x]), collapse = ",") 
     rhs <- stringr::str_replace_all(
-      "Sk * (1-Sk) * (Betak + (A[q,q] * Sk) + ((1+ deltak * f(Sk)) * A[-q,q] %*% ", c(k = paste0("_",colnames(A)[x]), q = x)) |> paste0(paste0("c(", sumAj, ")))"))
+      "Sk * (1-Sk) * (Betak + (A[q,q] * Sk) + (((1+ deltak * Sk^2)) * A[-q,q] %*% ", c(k = paste0("_",colnames(A)[x]), q = x)) |> paste0(paste0("c(", sumAj, ")))"))
     form <- as.formula(paste(lhs,"~", rhs))
   })
-  
-  
+
   # define stochastic part:
   sto_eq <-  1:9 |> map(function(x){
     lhs <- paste0("dS", paste0("_",colnames(A)[x]))
