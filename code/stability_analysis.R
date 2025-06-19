@@ -1,6 +1,7 @@
 library(dplyr)
 library(ggplot2)
 library(purrr)
+library(patchwork)
 
 # Select a single configuration
 set.seed(123)
@@ -46,15 +47,42 @@ mean_df <- results |>
   group_by(group, time) |> 
   summarise(mean_symptom = mean(total), .groups = "drop")
 
-# Plot
-ggplot(results, aes(x = time, y = total, group = interaction(rep, group))) +
-  geom_line(alpha = 0.2, color = "gray60") +
-  geom_line(data = mean_df, 
-            aes(x = time, y = mean_symptom, color = group, group = group), 
-            linewidth = 1.2) +
-  theme_minimal(base_size = 14) +
+# Compute mean and SD per time point for each repetition group
+df_summary <- results %>%
+  group_by(group, time) %>%
+  summarise(
+    mean_symptom = mean(total),
+    sd_symptom = sd(total),
+    .groups = "drop"
+  )
+
+
+df_summary <- df_summary |>
+  mutate(group = factor(group, levels = c("10 reps", "30 reps", "50 reps", "100 reps")))
+
+facet_plot <- ggplot(df_summary, aes(x = time, y = mean_symptom)) +
+  geom_ribbon(aes(ymin = mean_symptom - sd_symptom,
+                  ymax = mean_symptom + sd_symptom),
+              fill = "gray70", alpha = 0.5) +
+  geom_line(color = "steelblue", linewidth = 0.7) +
+  facet_wrap(~group, ncol = 2) +
   labs(x = "Time", y = "Aggregated symptom level",
-       title = "Stability of symptom trajectories across repetition sizes",
-       color = "Repetition count") +
+       title = "Symptom trajectories with SD (by repetition count)") +
+  theme_minimal(base_size = 14)
+
+mean_plot <- ggplot(df_summary, aes(x = time, y = mean_symptom, color = group)) +
+  geom_line(linewidth = 0.7, alpha = 0.5) +
+  labs(x = "Time", y = "Aggregated symptom level",
+       title = "Comparison of mean trajectories across repetition counts",
+       color = "Repetition") +
+  theme_minimal(base_size = 14) +
   theme(legend.position = "bottom")
 
+
+# Combine with (a), (b) labels
+# Combine plots with subplot labels
+combined_plot <- (facet_plot / mean_plot) + patchwork::plot_annotation(tag_levels = 'a')
+
+# Save to file
+ggsave("figure/repetition_stability_combined.png", combined_plot,
+       width = 10, height = 8, units = "in")
