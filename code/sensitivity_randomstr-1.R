@@ -1,6 +1,6 @@
-library(furrr); library(purrr); library(dplyr)
+library(furrr); library(purrr); library(dplyr); library(qgraph)
 
-plan(multisession, workers = 12)  # number of workers
+plan(multisession, workers = 12)  # or try 2
 
 source("code/mod_specification.R")
 source("code/euler_stochastic2.R")
@@ -8,7 +8,8 @@ source("code/helper_func.R")
 
 
 # set seed for reproducibility
-## seed123 with 100 nets
+set.seed(123)
+## seed1 with 500 nets
 
 # function to generate random network with same density (number of edges)
 generate_random_weighted_network <- function(n_nodes = 9, n_edges = 16, 
@@ -48,7 +49,7 @@ A_random <- generate_random_weighted_network(
   n_edges = 16,                  # same as in A_orig
   weight_range = c(0.1, 0.4),
   self_loop_value = 0.3,
-  seed = 123 # change seed as you wish
+  seed = 1 # change seed as you wish
 )
 
 # Step 2: Identify modifiable edges (edges with non-zero and off-diagonal)
@@ -68,8 +69,8 @@ print(table(loop_numbers))
 loop_counts <- loop_numbers
 
 # Setup
-target_loops <- c(0,3,6,9,12,15) #c(0,3,6,9,12,15,18)
-max_per_group <- 100 #500
+target_loops <- c(0,3,6,9,12,15,18) #c(0,3,6,9,12,15)
+max_per_group <- 500 #100
 sim_per_net <- 30
 deltaT <- 0.5 #0.2
 timelength <- 2000
@@ -143,7 +144,7 @@ df_summary |>
   dplyr::summarize(mean = mean(mean_symptom))
 
 ## recreate result 
-df_summary |> 
+p1 <- df_summary |> 
   ggplot(aes(x = factor(loops), y = mean_symptom, fill= factor(t), color = factor(t))) +
   geom_boxplot(width = .7,
                outlier.alpha = 0.1,
@@ -161,12 +162,13 @@ df_summary |>
   theme(legend.position = "bottom",
         # space between legend and plot
         legend.box.spacing = unit(1.3, "cm"),
-        text = element_text(size = 23, family="Palatino"),
-        legend.text=element_text(size=rel(0.9)),
+        text = element_text(size = 17, family="Palatino"),
+        legend.text=element_text(size=rel(0.8)),
         axis.title.y = element_text(vjust = +3),
         axis.title.x = element_text(vjust = -0.75),
         plot.margin = margin(t = 3, r = 4, b = 1, l = 1, "cm"))
 
+# ggsave("figure/sensitivity_feedbackloop.pdf", plot = p1, width = 23, height = 18, units = "cm", dpi = 300)
 
 
 ## Fig2
@@ -209,7 +211,7 @@ devtools::install_github("johannesbjork/LaCroixColoR")
 # # pal <- wes_palette("Zissou1", 100, type = "continuous")
 # pal <- LaCroixColoR::lacroix_palette("PeachPear", n = 10, type = "continuous") |> rev()
 
-df_summary2 |> filter(near(t, 1999.5), loops != 0) |> # decide time points later 
+fig2 <- df_summary2 |> filter(near(t, 1999.5), loops != 0) |> # decide time points later 
   ggplot(aes(x = sigma , #(1/relstr) * 3,
              y = mean_symptom)) +
   geom_point(aes(col = nos1),#nos1), #jaccard*50), size = 1,
@@ -232,3 +234,47 @@ df_summary2 |> filter(near(t, 1999.5), loops != 0) |> # decide time points later
         axis.title.y = element_text(vjust = +3),
         axis.title.x = element_text(vjust = -0.75),
         plot.margin = margin(1, 2, 1, 1, "cm")) 
+
+
+
+## adding overarching label for the facets
+# labels 
+labelT = "Number of feedback loop"
+
+# get the ggplot grob
+z <- ggplotGrob(fig2)
+
+# get the positions of the strips in the gtable: t = top, l = left, ...
+posT <- subset(z$layout, grepl("strip-t", name), select = t:r)
+
+# add a new column to the right of current right strips, 
+# and a new row on top of current top strips
+height <- z$heights[min(posT$t)]  # height of current top strips
+
+z <- gtable_add_rows(z, height, min(posT$t)-1)
+
+# construct the new strip grobs
+stripT <- gTree(name = "Strip_top", children = gList(
+  rectGrob(gp = gpar(col = "black", fill = "grey85")),
+  textGrob(labelT, gp = gpar(fontsize = 22, col = "black", fontfamily = "Palatino"))))
+
+# position the grobs in the gtable
+z <- gtable_add_grob(z, stripT, t = min(posT$t), l = min(posT$l), r = max(posT$r), name = "strip-top")
+
+# add small gaps between strips
+z <- gtable_add_rows(z, unit(1/5, "line"), min(posT$t))
+
+# draw it
+grid.newpage()
+grid.draw(z)
+
+
+# ggsave("figure/sensitivityanal_var_overlap.pdf", plot = z, width = 35, height = 20, units = "cm", dpi = 300)
+
+
+## example random network
+# pdf("figure/example_random_network.pdf", width = 6, height = 5)
+qgraph(A_random, theme = 'colorblind', border.color = 'darkgray', border.width = 2,
+       edge.color = "darkgray", edge.width = 0.8, curve = 0.3, curveAll = TRUE,
+       label.color = "black", legend.cex = 1.2, asize = 4)
+# dev.off()

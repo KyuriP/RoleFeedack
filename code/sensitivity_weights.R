@@ -145,3 +145,68 @@ df_summary |>
         axis.title.x = element_text(vjust = -0.75),
         plot.margin = margin(t = 3, r = 4, b = 1, l = 1, "cm"))
 
+
+
+## Fig2
+# Compute nos1 and nos2 for each configuration in configs
+nos_scores <- purrr::map(configs, function(mat) {
+  graph <- create_adjacency_list(mat)
+  loops <- find_loops(graph, mat)
+  loops <- purrr::discard(loops, ~ .x$loop_length == 1)
+  
+  if (length(loops) == 0) return(tibble::tibble(nos1 = 0, nos2 = 0))
+  
+  node_counts <- str_extract_all(names(loops), "\\d", simplify = TRUE)[, -1]
+  node_table <- table(node_counts)
+  
+  common_score <- sum(node_table^2)
+  n_loop <- length(loops)
+  nos1 <- common_score / (n_loop^2)
+  nos2 <- sum(as.numeric(node_table) - 1) / n_loop
+  
+  tibble::tibble(nos1 = nos1, nos2 = nos2)
+})
+
+nos_df <- purrr::list_rbind(nos_scores) 
+
+# Add config_id column to nos_df
+nos_df <- nos_df |> 
+  dplyr::mutate(config_id = seq_len(nrow(nos_df)))
+
+# Join to df_summary by config_id
+df_summary2 <- df_summary |>
+  dplyr::left_join(nos_df, by = "config_id")
+
+
+
+# install.packages("devtools")
+# library(devtools)
+# devtools::install_github("johannesbjork/LaCroixColoR")
+# 
+# # gradient color
+# # pal <- wes_palette("Zissou1", 100, type = "continuous")
+# pal <- LaCroixColoR::lacroix_palette("PeachPear", n = 10, type = "continuous") |> rev()
+
+df_summary2 |> filter(near(t, 1600), loops != 0) |> # decide time points later 
+  ggplot(aes(x = sigma , #(1/relstr) * 3,
+             y = mean_symptom)) +
+  geom_point(aes(col = nos1),#nos1), #jaccard*50), size = 1,
+             alpha = 0.7, size = 1.3, shape=20) +
+  geom_smooth(method = "loess", linewidth = 0.5, col = alpha("hotpink4", 0.7), se = F, span = 1) +
+  
+  # scale_color_gradientn(colours = pal) +
+  # scale_color_gradientn(colours = alpha(rainbow(10), 0.5)) +
+  scale_color_gradientn(colors = c("#172869", "#0A5396", "#037DB9", "#12A0B3", "#48C0AD", "#48C0AD", "#48C0AD", "#BBD9A8", "#E9CD98", "#E9A880", "#F26F44", "#FF3200")) +
+  # scale_color_gradient(low = "navy", high = "green") +
+  facet_wrap(~factor(loops)) +
+  labs(x = expression("Weighted degree variability ("~sigma[tot]~")"), y = "Average aggregated symptom level", color = "Feedback loop\noverlap level") +
+  theme_bw() +
+  guides(colour=guide_colourbar(barwidth=30,label.position="bottom"))+
+  theme(legend.position = "bottom",
+        # space between legend and plot
+        legend.box.spacing = unit(1.3, "cm"),
+        text = element_text(size = 23, family="Palatino"),
+        legend.text = element_text(size=rel(0.9)),
+        axis.title.y = element_text(vjust = +3),
+        axis.title.x = element_text(vjust = -0.75),
+        plot.margin = margin(1, 2, 1, 1, "cm")) 
