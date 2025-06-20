@@ -11,7 +11,7 @@ source("code/mod_specification.R")
 source("code/euler_stochastic2.R")
 source("code/helper_func.R")
 
-# Parameters
+# Parameters ## make sure to set the correct settings
 n_random_networks <- 5
 n_nodes <- 9
 n_edges <- 16
@@ -24,24 +24,6 @@ target_times <- c(400, 800, 1200, 1600, 1999.5)
 time_indices <- as.integer(target_times / deltaT + 1)
 
 # Function to generate random weighted network
-generate_random_weighted_network <- function(n_nodes, n_edges, weight_range, self_loop_value, seed = NULL) {
-  if (!is.null(seed)) set.seed(seed)
-  A <- matrix(0, nrow = n_nodes, ncol = n_nodes)
-  diag(A) <- self_loop_value
-  off_diag_indices <- which(row(A) != col(A), arr.ind = TRUE)
-  selected_edges <- off_diag_indices[sample(nrow(off_diag_indices), n_edges, replace = FALSE), ]
-  rand_weights <- runif(n_edges, weight_range[1], weight_range[2])
-  for (k in seq_len(n_edges)) {
-    i <- selected_edges[k, "row"]
-    j <- selected_edges[k, "col"]
-    A[i, j] <- rand_weights[k]
-  }
-  var_names <- c("anh", "sad", "slp", "ene", "app", "glt", "con", "mot", "sui")
-  rownames(A) <- colnames(A) <- var_names
-  return(A)
-}
-
-# Main wrapper for 1 random base network
 run_one_random_network_analysis <- function(seed_id) {
   A_random <- generate_random_weighted_network(n_nodes, n_edges, c(0.1, 0.4), self_loop_value = 0.3, seed = seed_id)
   modifiable_edges <- which(A_random > 0 & row(A_random) != col(A_random), arr.ind = TRUE)
@@ -117,8 +99,13 @@ run_one_random_network_analysis <- function(seed_id) {
   })
   
   nos_df <- list_rbind(nos_scores)
-  nos_df <- dplyr::mutate(nos_df, config_id = seq_len(nrow(nos_df)))
+  nos_df <- mutate(nos_df, config_id = seq_len(nrow(nos_df)))
+  
+  # Return joined result
+  df_out <- left_join(df_summary, nos_df, by = "config_id")
+  return(df_out)
 }
+
 
 # Run across multiple random networks
 set.seed(123)  # top-level seed for reproducibility
@@ -127,4 +114,36 @@ seeds <- sample(1:1e6, n_random_networks)  # fixed list of unique seeds
 df_summary_all <- map_dfr(seeds, run_one_random_network_analysis)
 
 # Save combined results
-saveRDS(df_summary_all, "results/sensitivity_multiple_random_networks.rds")
+# saveRDS(df_summary_all, "results/sensitivity_multiple_random_networks.rds")
+
+
+
+ggplot(df_summary_all, aes(x = factor(loops), y = mean_symptom, fill = factor(t), color = factor(t))) +
+  geom_boxplot(outlier.alpha = 0.1, width = 0.7, alpha = 0.2, position = position_dodge(width = 0.8)) +
+  labs(x = "Number of feedback loops", y = "Mean aggregated symptom level", color = "Time", fill = "Time") +
+  theme_minimal()
+
+
+df_summary_all |> filter(near(t, 1200), loops != 0) |> # decide time points later 
+  ggplot(aes(x = sigma , #(1/relstr) * 3,
+             y = mean_symptom)) +
+  geom_point(aes(col = nos1),#nos1), #jaccard*50), size = 1,
+             alpha = 0.7, size = 1.3, shape=20) +
+  geom_smooth(method = "loess", linewidth = 0.5, col = alpha("hotpink4", 0.7), se = F, span = 1) +
+  
+  # scale_color_gradientn(colours = pal) +
+  # scale_color_gradientn(colours = alpha(rainbow(10), 0.5)) +
+  scale_color_gradientn(colors = c("#172869", "#0A5396", "#037DB9", "#12A0B3", "#48C0AD", "#48C0AD", "#48C0AD", "#BBD9A8", "#E9CD98", "#E9A880", "#F26F44", "#FF3200")) +
+  # scale_color_gradient(low = "navy", high = "green") +
+  facet_wrap(~factor(loops)) +
+  labs(x = expression("Weighted degree variability ("~sigma[tot]~")"), y = "Average aggregated symptom level", color = "Feedback loop\noverlap level") +
+  theme_bw() +
+  guides(colour=guide_colourbar(barwidth=30,label.position="bottom"))+
+  theme(legend.position = "bottom",
+        # space between legend and plot
+        legend.box.spacing = unit(1.3, "cm"),
+        text = element_text(size = 23, family="Palatino"),
+        legend.text = element_text(size=rel(0.9)),
+        axis.title.y = element_text(vjust = +3),
+        axis.title.x = element_text(vjust = -0.75),
+        plot.margin = margin(1, 2, 1, 1, "cm")) 
