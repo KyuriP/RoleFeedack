@@ -1,16 +1,17 @@
-library(furrr); plan(multisession)
-
-plan(multisession, workers = 10)  # or try 2
-
+# ===================================================
+# Sensitivity Analysis: Structural Robustness via Random Weights (Original Skeleton)
+# ===================================================
+# Simulates symptom dynamics using weight variants of a fixed empirical network structure.
+# Evaluates how the number of feedback loops and structural variability influence symptom severity.
+# Load model, solver, and utilities
 source("code/mod_specification.R")
 source("code/euler_stochastic2.R")
 source("code/helper_func.R")
+source("code/libraries.R")
 
+plan(multisession, workers = 10)  # Parallel processing
 
-# Define f(S) = S^2 for mod_spec()
-f <- function(x) x^2
-
-# Network structure
+# ---- Define original network structure ----
 A_orig <- matrix(c(
   .30, 0, 0, 0, 0, 0, 0, 0, 0,
   .33, .30, .14, .15, 0, .13, 0, 0, .15,
@@ -24,16 +25,17 @@ A_orig <- matrix(c(
 ), 9, 9, byrow = TRUE)
 rownames(A_orig) <- colnames(A_orig) <- c("anh", "sad", "slp", "ene", "app", "glt", "con", "mot", "sui")
 
-# Setup
+# ---- Define simulation parameters ----
 edge_indices <- which(A_orig > 0 & row(A_orig) != col(A_orig), arr.ind = TRUE)
 modifiable_edges <- lapply(seq_len(nrow(edge_indices)), function(i) edge_indices[i, ])
-target_loops <- 0:20
-max_per_group <- 100
-sim_per_net <- 30
-deltaT <- 0.2
-timelength <- 2000
+target_loops <- 0:20            # Desired feedback loop groups
+max_per_group <- 100            # Max configs sampled per loop group
+sim_per_net <- 30               # Number of simulations per config
+deltaT <- 0.2                   # Time resolution
+timelength <- 2000              # Total simulation duration
 
-# Create random weighted network
+
+# ---- Randomize edge weights while preserving skeleton ----
 set.seed(1)
 A_rand <- matrix(0, 9, 9)
 diag(A_rand) <- 0.30
@@ -42,34 +44,33 @@ for (j in seq_len(nrow(edge_indices))) {
   A_rand[edge_indices[j, 1], edge_indices[j, 2]] <- rand_weights[j]
 }
 
-# Generate configs and loop counts
+# ---- Generate directional configurations ----
+modifiable_edges <- lapply(seq_len(nrow(edge_indices)), function(i) edge_indices[i, ])
 all_configs <- generate_configurations(A_rand, modifiable_edges)
 
-# Count number of feedback loops (excluding self-loops)
-loop_numbers <- purrr::map_dbl(all_configs, \(network) {
-  find_loops(create_adjacency_list(network), network) |> length() - 9 # subtract self-loops
+# Count loops (subtract 9 for self-loops)
+loop_numbers <- purrr::map_dbl(all_configs, \(net) {
+  find_loops(create_adjacency_list(net), net) |> length() - 9
 })
+print(table(loop_numbers))  # Loop distribution
 
 
-loop_counts <- loop_numbers
-# Optional: print loop count distribution to debug
-print(table(loop_numbers))
-
-# Sample equal number of configurations per loop group (0, 5, 10, 15)
+# ---- Sample configurations by loop count ----
 selected_configs <- unlist(lapply(target_loops, function(k) {
-  idx <- which(loop_counts == k)
+  idx <- which(loop_numbers == k)
   if (length(idx) == 0) return(integer(0))
   sample(idx, min(max_per_group, length(idx)))
 }), use.names = FALSE)
 
 configs <- all_configs[selected_configs]
-loop_counts <- loop_counts[selected_configs]
+loop_counts <- loop_numbers[selected_configs]
 
 # Define the exact time points you want
 target_times <- c(400, 800, 1200, 1600, 1999.8)
 time_indices <- as.integer(target_times / deltaT + 1)  # Index positions
 
-# Run simulation
+
+# ---- Run simulations and summarize ----
 # Run simulation and directly summarize by config and time
 df_summary <- future_map_dfr(seq_along(configs), function(i) {
   A_conf <- configs[[i]]
@@ -112,15 +113,16 @@ df_summary <- future_map_dfr(seq_along(configs), function(i) {
 }, .progress = TRUE, .options = furrr_options(seed = TRUE))
 
 # Save results
-saveRDS(df_summary, "results/sensitivity_res_100_0-20loops.rds")
-
+# saveRDS(df_summary, "results/sensitivity_res_100_0-20loops.rds")
 
 
 df_summary |>
   group_by(loops) |>
   dplyr::summarize(mean = mean(mean_symptom))
 
-## recreate result 
+
+# ---- Recreate main result  ----
+## Fig1
 df_summary |> 
   ggplot(aes(x = factor(loops), y = mean_symptom, fill= factor(t), color = factor(t))) +
   geom_boxplot(width = .7,
@@ -178,7 +180,6 @@ df_summary2 <- df_summary |>
   dplyr::left_join(nos_df, by = "config_id")
 
 
-
 # install.packages("devtools")
 # library(devtools)
 # devtools::install_github("johannesbjork/LaCroixColoR")
@@ -210,3 +211,4 @@ df_summary2 |> filter(near(t, 1600), loops != 0) |> # decide time points later
         axis.title.y = element_text(vjust = +3),
         axis.title.x = element_text(vjust = -0.75),
         plot.margin = margin(1, 2, 1, 1, "cm")) 
+

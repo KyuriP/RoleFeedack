@@ -10,6 +10,8 @@ library(bootnet)
 library(rootSolve)
 library(deSolve)
 library(stringr)
+library(furrr)
+library(tibble)
 
 # packages for plotting
 library(ggplot2)
