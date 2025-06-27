@@ -113,6 +113,33 @@ generate_configurations <- function(A, modifiable_edges) {
 }
 
 
+# Generate a random weighted network
+generate_random_weighted_network <- function(n_nodes = 9, n_edges = 16, 
+                                             weight_range = c(0.1, 0.4), 
+                                             self_loop_value = 0.3, 
+                                             seed = NULL) {
+  if (!is.null(seed)) set.seed(seed)
+  
+  A <- matrix(0, nrow = n_nodes, ncol = n_nodes)
+  diag(A) <- self_loop_value  # Constant self-loop on each node
+  
+  off_diag_indices <- which(row(A) != col(A), arr.ind = TRUE)
+  selected_edges <- off_diag_indices[sample(nrow(off_diag_indices), n_edges), ]
+  rand_weights <- runif(n_edges, weight_range[1], weight_range[2])
+  
+  for (k in seq_len(n_edges)) {
+    i <- selected_edges[k, "row"]
+    j <- selected_edges[k, "col"]
+    A[i, j] <- rand_weights[k]
+  }
+  
+  var_names <- c("anh", "sad", "slp", "ene", "app", "glt", "con", "mot", "sui")
+  rownames(A) <- colnames(A) <- var_names
+  
+  return(A)
+}
+
+
 #########################################################################
 # Function to generate all unique configurations considering dyadic loops
 generate_configurations2 <- function(A, modifiable_edges, dyadic_loops) {

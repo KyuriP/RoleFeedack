@@ -1,11 +1,27 @@
-library(dplyr)
-library(ggplot2)
-library(purrr)
-library(patchwork)
+# ===================================================
+# Stability Analysis
+# ===================================================
+# This script evaluates how the number of iteration affects
+# the stability of symptom trajectory estimates using a fixed network configuration.
+
+# ---------------------------------------------------
+# Load functions and libraries
+# ---------------------------------------------------
+source("code/mod_specification.R")
+source("code/euler_stochastic2.R")
+source("code/helper_func.R")
+source("code/libraries.R")
+
 
 # Select a single configuration
 set.seed(123)
-A_conf <- configs[[1]]
+A_conf <- generate_random_weighted_network(
+  n_nodes = 9,
+  n_edges = 16,                  # same as in A_orig
+  weight_range = c(0.1, 0.4),
+  self_loop_value = 0.3,
+  seed = 1 # change seed as you wish
+)
 mod <- mod_spec("base", init_val = 0.01, mat = A_conf)
 
 # Simulation parameters
@@ -57,9 +73,12 @@ df_summary <- results %>%
   )
 
 
+# Compute summary statistics
 df_summary <- df_summary |>
   mutate(group = factor(group, levels = c("10 reps", "30 reps", "50 reps", "100 reps")))
 
+
+# Plot 1: Faceted ribbon plots with SD for each repetition level
 facet_plot <- ggplot(df_summary, aes(x = time, y = mean_symptom)) +
   geom_ribbon(aes(ymin = mean_symptom - sd_symptom,
                   ymax = mean_symptom + sd_symptom),
@@ -70,6 +89,7 @@ facet_plot <- ggplot(df_summary, aes(x = time, y = mean_symptom)) +
        title = "Symptom trajectories with SD (by repetition count)") +
   theme_minimal(base_size = 14)
 
+# Plot 2: Combined mean trajectories across repetition counts
 mean_plot <- ggplot(df_summary, aes(x = time, y = mean_symptom, color = group)) +
   geom_line(linewidth = 0.7, alpha = 0.5) +
   labs(x = "Time", y = "Aggregated symptom level",
