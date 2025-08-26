@@ -145,7 +145,7 @@ fig1 <- comb_res |>
                position = position_dodge(width = 0.8))  +
   scale_fill_manual(values = c("cyan3", "#E7B000", "salmon", "palegreen3", "slateblue3")) +
   scale_colour_manual(values = c("cyan4", "#E7A809", "salmon2", "palegreen4", "slateblue4"), labels = c("t = 400", "t = 800", "t = 1200", "t = 1600", "t = 2000")) +
-  labs(x = "Number of feedback loop", y = "Average aggregated symptom level", col = "")  +
+  labs(x = "Number of feedback loops", y = "Average aggregated symptom level", col = "")  +
   theme_pubr() +
   guides(fill = "none") + 
   theme(legend.position = "bottom",
@@ -177,7 +177,7 @@ p2 <- cowplot::insert_xaxis_grob(fig1, xdens, grid::unit(0.2, "null"), position 
 p3 <- cowplot::insert_yaxis_grob(p2, ydens, grid::unit(.05, "null"), position = "right")
 cowplot::ggdraw(p3) 
 
-# ggsave("figure/feedback_density2.pdf", plot = p3, width = 40, height = 22, units = "cm", dpi = 300)
+# ggsave("figure/feedback_density3.pdf", plot = p3, width = 40, height = 22, units = "cm", dpi = 300)
 
 
 ## ================================
@@ -220,7 +220,7 @@ fig2 <- comb_avg_res |> filter(t==1200, nloop!=0) |> # decide time points later
 
 ## adding overarching label for the facets
 # labels 
-labelT = "Number of feedback loop"
+labelT = "Number of feedback loops"
 
 # get the ggplot grob
 z <- ggplotGrob(fig2)
@@ -249,7 +249,7 @@ z <- gtable_add_rows(z, unit(1/5, "line"), min(posT$t))
 grid.newpage()
 grid.draw(z)
 
-# ggsave("figure/var_overlap.pdf", plot = z, width = 35, height = 30, units = "cm", dpi = 300)
+# ggsave("figure/var_overlap2.pdf", plot = z, width = 35, height = 30, units = "cm", dpi = 300)
 
 
   
