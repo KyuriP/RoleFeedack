@@ -137,7 +137,7 @@ run_one_random_network_analysis <- function(seed_id) {
     if (length(loops) == 0) return(tibble(nos1 = 0, nos2 = 0))
     
     node_counts <- str_extract_all(names(loops), "\\d", simplify = TRUE)[, -1]
-    node_table <- table(node_counts)
+    node_table <- table(node_counts, exclude = "")  # drop "" padding from simplify = TRUE
     
     common_score <- sum(node_table^2)
     n_loop <- length(loops)
